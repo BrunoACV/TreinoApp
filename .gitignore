@@ -1,0 +1,30 @@
+# GIFs (2.5 GB - manter local apenas)
+android/app/src/main/assets/gifs/
+
+# Build outputs
+android/app/build/
+android/build/
+*.apk
+*.aab
+*.ap_
+
+# Gradle
+.gradle/
+android/.gradle/
+android/local.properties
+
+# Android Studio / IntelliJ
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Node / npm (se houver)
+node_modules/
+
+# Logs
+*.log

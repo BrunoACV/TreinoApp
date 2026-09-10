@@ -1,0 +1,584 @@
+[
+  {
+    "id": "custom_4x_treino_a",
+    "title": "Treino A — Peito & Tríceps (4x/sem)",
+    "category": "Divisão 4x por Semana",
+    "icon": "⚡",
+    "description": "Foco na parte média, superior e miolo do peitoral, além de tríceps completo.",
+    "notes": "Progressão de carga: aumente 1 a 2 kg a cada 2-3 semanas. Ao subir o peso, faça 3x10 até alcançar 3x12.",
+    "exercises": [
+      {
+        "name": "Supino Reto",
+        "series": 1,
+        "reps": "15-20",
+        "weight": "20",
+        "rest": 60,
+        "notes": "Aquecimento com 40% a 60% da carga (não conta como série pesada)."
+      },
+      {
+        "name": "Supino Reto",
+        "series": 3,
+        "reps": "12",
+        "weight": "50",
+        "rest": 90,
+        "notes": "Com peso máximo para a faixa (parte média do peitoral)."
+      },
+      {
+        "name": "Supino Inclinado com Halteres",
+        "series": 3,
+        "reps": "12",
+        "weight": "20",
+        "rest": 75,
+        "notes": "Foco na parte superior/clavicular do peitoral."
+      },
+      {
+        "name": "Cross over polia baixa",
+        "series": 3,
+        "reps": "12",
+        "weight": "15",
+        "rest": 60,
+        "notes": "Foco na porção inferior e linha do peitoral."
+      },
+      {
+        "name": "Voador no pec deck",
+        "series": 3,
+        "reps": "12",
+        "weight": "40",
+        "rest": 60,
+        "notes": "Foco na parte média e miolo do peito. Segure 1s na contração."
+      },
+      {
+        "name": "Tríceps Pulley barra V",
+        "series": 3,
+        "reps": "12",
+        "weight": "25",
+        "rest": 60,
+        "notes": "Pode alternar uma semana com barra e outra semana com corda."
+      },
+      {
+        "name": "Tríceps testa com barra",
+        "series": 3,
+        "reps": "12",
+        "weight": "18",
+        "rest": 60,
+        "notes": "Pode fazer na polia com corda ou com barra W."
+      },
+      {
+        "name": "Tríceps francês na polia com corda",
+        "series": 3,
+        "reps": "12",
+        "weight": "20",
+        "rest": 60,
+        "notes": "Excelente para a cabeça longa do tríceps."
+      }
+    ]
+  },
+  {
+    "id": "custom_4x_treino_b",
+    "title": "Treino B — Costas & Bíceps (4x/sem)",
+    "category": "Divisão 4x por Semana",
+    "icon": "🎯",
+    "description": "Foco em largura e espessura das costas, trapézio e cadeia flexora dos braços.",
+    "notes": "Aquecer na puxada antes de iniciar as cargas máximas.",
+    "exercises": [
+      {
+        "name": "Puxada Alta",
+        "series": 1,
+        "reps": "15-20",
+        "weight": "25",
+        "rest": 60,
+        "notes": "Aquecimento na puxada aberta com 40% a 60% da carga."
+      },
+      {
+        "name": "Puxada Alta",
+        "series": 3,
+        "reps": "12",
+        "weight": "50",
+        "rest": 90,
+        "notes": "Pegada aberta (parte superior das costas / largura)."
+      },
+      {
+        "name": "Puxada na Polia Alta com Pegada Fechada",
+        "series": 3,
+        "reps": "12",
+        "weight": "50",
+        "rest": 90,
+        "notes": "Pegada fechada (parte inferior das costas / espessura)."
+      },
+      {
+        "name": "Remada Curvada com Barra",
+        "series": 3,
+        "reps": "12",
+        "weight": "40",
+        "rest": 90,
+        "notes": "Pegada aberta, fechando bem as escápulas na subida."
+      },
+      {
+        "name": "Remada Sentada com Cabo",
+        "series": 3,
+        "reps": "12",
+        "weight": "45",
+        "rest": 60,
+        "notes": "Remada baixa. Alterne a cada semana com Serrote unilateral."
+      },
+      {
+        "name": "Pulldown com corda",
+        "series": 3,
+        "reps": "12",
+        "weight": "25",
+        "rest": 60,
+        "notes": "Foco nas asas dorsais e largura."
+      },
+      {
+        "name": "Rosca direta com barra w",
+        "series": 3,
+        "reps": "12",
+        "weight": "20",
+        "rest": 60,
+        "notes": "Pode fazer com barra W, na polia ou com halteres."
+      },
+      {
+        "name": "Rosca martelo",
+        "series": 3,
+        "reps": "12",
+        "weight": "12",
+        "rest": 60,
+        "notes": "Polia com corda ou halteres. Foco em braquial e antebraço."
+      },
+      {
+        "name": "Rosca Banco Inclinado",
+        "series": 3,
+        "reps": "12",
+        "weight": "10",
+        "rest": 60,
+        "notes": "Máximo alongamento do bíceps no banco inclinado."
+      }
+    ]
+  },
+  {
+    "id": "custom_4x_treino_c",
+    "title": "Treino C — Ombro, Antebraço & Trapézio (4x/sem)",
+    "category": "Divisão 4x por Semana",
+    "icon": "🛡️",
+    "description": "Foco nas 3 cabeças do deltoide, manguito rotador, punho e trapézio.",
+    "notes": "Não pule o aquecimento do manguito para proteger os ombros.",
+    "exercises": [
+      {
+        "name": "Rotação Externa de Ombro com Cabo",
+        "series": 2,
+        "reps": "15",
+        "weight": "5-10",
+        "rest": 45,
+        "notes": "Aquecimento do manguito rotador na polia (5 a 10 kg)."
+      },
+      {
+        "name": "Desenvolvimento de Ombro no Banco com Halteres",
+        "series": 4,
+        "reps": "10",
+        "weight": "16",
+        "rest": 90,
+        "notes": "Porção frontal do ombro. Carga desafiadora."
+      },
+      {
+        "name": "Elevação lateral de braços com halteres",
+        "series": 4,
+        "reps": "10",
+        "weight": "10",
+        "rest": 60,
+        "notes": "Porção lateral do ombro (aspecto em V e ombros largos)."
+      },
+      {
+        "name": "Crucifixo inverso unilateral com cabo",
+        "series": 4,
+        "reps": "10",
+        "weight": "12",
+        "rest": 60,
+        "notes": "Porção traseira do ombro (pode alternar com peck deck invertido)."
+      },
+      {
+        "name": "Rosca de punho com barra",
+        "series": 3,
+        "reps": "12",
+        "weight": "15",
+        "rest": 45,
+        "notes": "Flexores do punho / parte de baixo do antebraço."
+      },
+      {
+        "name": "Rosca Inversa com Barra",
+        "series": 3,
+        "reps": "12",
+        "weight": "15",
+        "rest": 45,
+        "notes": "Extensores do punho / parte de cima do antebraço."
+      },
+      {
+        "name": "Encolhimento com Halteres",
+        "series": 4,
+        "reps": "12",
+        "weight": "26",
+        "rest": 60,
+        "notes": "Pode fazer com halteres, barra ou na polia."
+      }
+    ]
+  },
+  {
+    "id": "custom_4x_treino_d",
+    "title": "Treino D — Perna Completo (4x/sem)",
+    "category": "Divisão 4x por Semana",
+    "icon": "🦵",
+    "description": "Quadríceps, isquiotibiais, glúteos e panturrilha com estímulo completo.",
+    "notes": "Panturrilhas: comece com 4x20 e progrida para 5x20 ou 4x25.",
+    "exercises": [
+      {
+        "name": "Agachamento no Banco com Peso Corporal",
+        "series": 1,
+        "reps": "20",
+        "weight": "0",
+        "rest": 60,
+        "notes": "Aquecimento livre de 20 repetições antes das cargas pesadas."
+      },
+      {
+        "name": "Agachamento Búlgaro com Halteres",
+        "series": 3,
+        "reps": "12 cada",
+        "weight": "14",
+        "rest": 75,
+        "notes": "Quadríceps e glúteo com alta ativação unilateral."
+      },
+      {
+        "name": "Stiff com barra",
+        "series": 3,
+        "reps": "12",
+        "weight": "40",
+        "rest": 90,
+        "notes": "Posterior de coxas e cadeia posterior."
+      },
+      {
+        "name": "Cadeira extensora",
+        "series": 3,
+        "reps": "12",
+        "weight": "45",
+        "rest": 60,
+        "notes": "Isolamento de quadríceps com pico de contração."
+      },
+      {
+        "name": "Cadeira flexora",
+        "series": 3,
+        "reps": "12",
+        "weight": "40",
+        "rest": 60,
+        "notes": "Pode alternar com mesa flexora para variar o estímulo."
+      },
+      {
+        "name": "Máquina de Abdução de Quadril",
+        "series": 3,
+        "reps": "12",
+        "weight": "50",
+        "rest": 45,
+        "notes": "Glúteo lateral e médio."
+      },
+      {
+        "name": "Máquina de Adução de Quadril",
+        "series": 3,
+        "reps": "12",
+        "weight": "45",
+        "rest": 45,
+        "notes": "Interno das coxas (adutores)."
+      },
+      {
+        "name": "Agachamento Barra",
+        "series": 3,
+        "reps": "12+",
+        "weight": "60",
+        "rest": 120,
+        "notes": "Agachamento livre completo com carga pesada."
+      },
+      {
+        "name": "Elevação de panturrilha em pé",
+        "series": 4,
+        "reps": "20",
+        "weight": "40",
+        "rest": 45,
+        "notes": "Comece com 4x20 e vá progredindo para 5x20 ou 4x25."
+      }
+    ]
+  },
+  {
+    "id": "custom_3x_push",
+    "title": "Treino 3x — Push (Peito, Tríceps & Ombro)",
+    "category": "Divisão 3x por Semana (PPL)",
+    "icon": "⚡",
+    "description": "Treino rápido e completo de empurrar (Peito, Tríceps e Deltóides Frontal/Lateral).",
+    "notes": "Cardio: ande na velocidade máxima (quase correndo) para não catabolizar.",
+    "exercises": [
+      {
+        "name": "Supino Reto",
+        "series": 1,
+        "reps": "15-20",
+        "weight": "20",
+        "rest": 60,
+        "notes": "Aquecimento com 40-60% do peso."
+      },
+      {
+        "name": "Supino Reto",
+        "series": 3,
+        "reps": "12",
+        "weight": "50",
+        "rest": 90,
+        "notes": "Parte média do peitoral com carga máxima."
+      },
+      {
+        "name": "Supino Inclinado com Halteres",
+        "series": 3,
+        "reps": "12",
+        "weight": "20",
+        "rest": 75,
+        "notes": "Parte superior do peitoral."
+      },
+      {
+        "name": "Cross over polia baixa",
+        "series": 3,
+        "reps": "12",
+        "weight": "15",
+        "rest": 60,
+        "notes": "Parte inferior do peitoral."
+      },
+      {
+        "name": "Voador no pec deck",
+        "series": 3,
+        "reps": "12",
+        "weight": "40",
+        "rest": 60,
+        "notes": "Parte média e miolo."
+      },
+      {
+        "name": "Desenvolvimento de Ombro no Banco com Halteres",
+        "series": 4,
+        "reps": "10",
+        "weight": "16",
+        "rest": 90,
+        "notes": "Porção frontal do ombro."
+      },
+      {
+        "name": "Elevação lateral de braços com halteres",
+        "series": 4,
+        "reps": "10",
+        "weight": "10",
+        "rest": 60,
+        "notes": "Porção lateral do ombro."
+      },
+      {
+        "name": "Tríceps Pulley barra V",
+        "series": 3,
+        "reps": "12",
+        "weight": "25",
+        "rest": 60,
+        "notes": "Polia com barra W ou corda."
+      },
+      {
+        "name": "Tríceps testa com barra",
+        "series": 3,
+        "reps": "12",
+        "weight": "18",
+        "rest": 60,
+        "notes": "Na polia ou com barra."
+      },
+      {
+        "name": "Tríceps francês na polia com corda",
+        "series": 3,
+        "reps": "12",
+        "weight": "20",
+        "rest": 60,
+        "notes": "Na polia com corda ou barra."
+      }
+    ]
+  },
+  {
+    "id": "custom_3x_pull",
+    "title": "Treino 3x — Pull (Costas, Bíceps & Posterior)",
+    "category": "Divisão 3x por Semana (PPL)",
+    "icon": "🎯",
+    "description": "Treino completo de puxar: costas, bíceps, deltoide traseiro, antebraço e trapézio.",
+    "notes": "Lembre-se de fazer panturrilha e abdominal 2x na semana.",
+    "exercises": [
+      {
+        "name": "Puxada Alta",
+        "series": 1,
+        "reps": "15-20",
+        "weight": "25",
+        "rest": 60,
+        "notes": "Aquecimento na puxada aberta (40-60% do peso)."
+      },
+      {
+        "name": "Puxada Alta",
+        "series": 3,
+        "reps": "12",
+        "weight": "50",
+        "rest": 90,
+        "notes": "Parte superior das costas / largura."
+      },
+      {
+        "name": "Puxada na Polia Alta com Pegada Fechada",
+        "series": 3,
+        "reps": "12",
+        "weight": "50",
+        "rest": 90,
+        "notes": "Parte inferior das costas / espessura."
+      },
+      {
+        "name": "Remada Curvada com Barra",
+        "series": 3,
+        "reps": "12",
+        "weight": "40",
+        "rest": 90,
+        "notes": "Pegada aberta fechando a escápula."
+      },
+      {
+        "name": "Remada Sentada com Cabo",
+        "series": 3,
+        "reps": "12",
+        "weight": "45",
+        "rest": 60,
+        "notes": "Remada baixa ou serrote (alterne as semanas)."
+      },
+      {
+        "name": "Pulldown com corda",
+        "series": 3,
+        "reps": "12",
+        "weight": "25",
+        "rest": 60,
+        "notes": "Asas / largura."
+      },
+      {
+        "name": "Rosca direta com barra w",
+        "series": 3,
+        "reps": "12",
+        "weight": "20",
+        "rest": 60,
+        "notes": "Barra W, polia ou halter."
+      },
+      {
+        "name": "Rosca martelo",
+        "series": 3,
+        "reps": "12",
+        "weight": "12",
+        "rest": 60,
+        "notes": "Polia com corda ou halter."
+      },
+      {
+        "name": "Crucifixo inverso unilateral com cabo",
+        "series": 4,
+        "reps": "10",
+        "weight": "12",
+        "rest": 60,
+        "notes": "Porção traseira do ombro."
+      },
+      {
+        "name": "Rosca de punho com barra",
+        "series": 3,
+        "reps": "12",
+        "weight": "15",
+        "rest": 45,
+        "notes": "Flexores / parte de baixo do antebraço."
+      },
+      {
+        "name": "Rosca Inversa com Barra",
+        "series": 3,
+        "reps": "12",
+        "weight": "15",
+        "rest": 45,
+        "notes": "Extensores / parte de cima do antebraço."
+      },
+      {
+        "name": "Encolhimento com Halteres",
+        "series": 4,
+        "reps": "12",
+        "weight": "26",
+        "rest": 60,
+        "notes": "Trapézio (barra, polia ou halter)."
+      }
+    ]
+  },
+  {
+    "id": "custom_3x_legs",
+    "title": "Treino 3x — Legs (Perna Completo)",
+    "category": "Divisão 3x por Semana (PPL)",
+    "icon": "🦵",
+    "description": "Treino completo de pernas para quem treina 3 vezes por semana.",
+    "notes": "Caminhada rápida no cardio para queima sem perder massa magra.",
+    "exercises": [
+      {
+        "name": "Agachamento no Banco com Peso Corporal",
+        "series": 1,
+        "reps": "20",
+        "weight": "0",
+        "rest": 60,
+        "notes": "Aquecimento livre de 20 repetições."
+      },
+      {
+        "name": "Agachamento Búlgaro com Halteres",
+        "series": 3,
+        "reps": "12 cada",
+        "weight": "14",
+        "rest": 75,
+        "notes": "Quadríceps e glúteo."
+      },
+      {
+        "name": "Stiff com barra",
+        "series": 3,
+        "reps": "12",
+        "weight": "40",
+        "rest": 90,
+        "notes": "Posterior de coxas."
+      },
+      {
+        "name": "Cadeira extensora",
+        "series": 3,
+        "reps": "12",
+        "weight": "45",
+        "rest": 60,
+        "notes": "Quadríceps isolado."
+      },
+      {
+        "name": "Cadeira flexora",
+        "series": 3,
+        "reps": "12",
+        "weight": "40",
+        "rest": 60,
+        "notes": "Posterior de coxas (cadeira ou mesa flexora)."
+      },
+      {
+        "name": "Máquina de Abdução de Quadril",
+        "series": 3,
+        "reps": "12",
+        "weight": "50",
+        "rest": 45,
+        "notes": "Glúteo lateral."
+      },
+      {
+        "name": "Máquina de Adução de Quadril",
+        "series": 3,
+        "reps": "12",
+        "weight": "45",
+        "rest": 45,
+        "notes": "Interno das coxas."
+      },
+      {
+        "name": "Agachamento Barra",
+        "series": 3,
+        "reps": "12+",
+        "weight": "60",
+        "rest": 120,
+        "notes": "Agachamento livre completo."
+      },
+      {
+        "name": "Elevação de panturrilha em pé",
+        "series": 4,
+        "reps": "20",
+        "weight": "40",
+        "rest": 45,
+        "notes": "Progrida para 5x20 ou 4x25 conforme ganhar resistência."
+      }
+    ]
+  }
+]

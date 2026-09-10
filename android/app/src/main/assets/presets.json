@@ -1,0 +1,495 @@
+[
+  {
+    "id": "preset_ppl_push",
+    "title": "Push 1 — Peito, Ombros & Tríceps",
+    "category": "PPL (Push / Pull / Legs)",
+    "icon": "push",
+    "description": "Foco em peitoral, deltoides frontais/laterais e tríceps com ênfase em sobrecarga progressiva.",
+    "exercises": [
+      {
+        "name": "Supino Reto",
+        "series": 4,
+        "reps": "8-10",
+        "weight": "60",
+        "rest": 90,
+        "notes": "Controle na descida, amplitude completa.",
+        "gif_file": "Supino Reto.gif",
+        "category": "Peitoral"
+      },
+      {
+        "name": "Supino Inclinado com Halteres",
+        "series": 3,
+        "reps": "10-12",
+        "weight": "24",
+        "rest": 75,
+        "notes": "Banco em 30 a 45 graus.",
+        "gif_file": "Supino Inclinado com Halteres.gif",
+        "category": "Peitoral"
+      },
+      {
+        "name": "Crucifixo com Halteres Inclinado",
+        "series": 3,
+        "reps": "12-15",
+        "weight": "14",
+        "rest": 60,
+        "notes": "Foco no alongamento da fáscia peitoral.",
+        "gif_file": "Crucifixo com Halteres Inclinado.gif",
+        "category": "Peitoral"
+      },
+      {
+        "name": "Desenvolvimento militar com barra",
+        "series": 4,
+        "reps": "8-10",
+        "weight": "35",
+        "rest": 90,
+        "notes": "Ative o abdômen e glúteos para estabilizar.",
+        "gif_file": "Desenvolvimento militar com barra.gif",
+        "category": "Ombros"
+      },
+      {
+        "name": "Elevação lateral de braços com halteres",
+        "series": 4,
+        "reps": "12-15",
+        "weight": "10",
+        "rest": 60,
+        "notes": "Suba até a linha do ombro sem balanço.",
+        "gif_file": "Elevação lateral de braços com halteres.gif",
+        "category": "Ombros"
+      },
+      {
+        "name": "Tríceps pulley corda",
+        "series": 4,
+        "reps": "12-15",
+        "weight": "25",
+        "rest": 60,
+        "notes": "Abra as cordas no final da extensão.",
+        "gif_file": "Tríceps pulley corda.gif",
+        "category": "Tríceps"
+      },
+      {
+        "name": "Tríceps testa com barra",
+        "series": 3,
+        "reps": "10-12",
+        "weight": "20",
+        "rest": 60,
+        "notes": "Cotovelos fechados apontando para o teto.",
+        "gif_file": "Tríceps testa com barra.gif",
+        "category": "Tríceps"
+      }
+    ]
+  },
+  {
+    "id": "preset_ppl_pull",
+    "title": "Pull 1 — Costas, Deltoide Posterior & Bíceps",
+    "category": "PPL (Push / Pull / Legs)",
+    "icon": "pull",
+    "description": "Desenvolvimento de espessura e largura dorsal, trapézio e cadeia flexora de braço.",
+    "exercises": [
+      {
+        "name": "Levantamento Terra",
+        "series": 4,
+        "reps": "6-8",
+        "weight": "90",
+        "rest": 120,
+        "notes": "Manter a coluna neutra e tração contínua.",
+        "gif_file": "Levantamento Terra.gif",
+        "category": "Costas"
+      },
+      {
+        "name": "Puxada Alta com Triângulo",
+        "series": 4,
+        "reps": "8-10",
+        "weight": "55",
+        "rest": 90,
+        "notes": "Puxe em direção ao esterno deprimindo as escápulas.",
+        "gif_file": "Puxada Alta com Triângulo.gif",
+        "category": "Costas"
+      },
+      {
+        "name": "Remada Curvada com Barra",
+        "series": 4,
+        "reps": "8-10",
+        "weight": "50",
+        "rest": 90,
+        "notes": "Tronco inclinado a 45 graus, pegada pronada.",
+        "gif_file": "Remada Curvada com Barra.gif",
+        "category": "Costas"
+      },
+      {
+        "name": "Remada Sentada com Cabo",
+        "series": 3,
+        "reps": "10-12",
+        "weight": "45",
+        "rest": 60,
+        "notes": "Contraia bem os dorsais por 1 segundo no pico.",
+        "gif_file": "Remada Sentada com Cabo.gif",
+        "category": "Costas"
+      },
+      {
+        "name": "Voador invertido",
+        "series": 4,
+        "reps": "12-15",
+        "weight": "35",
+        "rest": 60,
+        "notes": "Foco total na porção posterior do deltoide.",
+        "gif_file": "Voador invertido.gif",
+        "category": "Ombros"
+      },
+      {
+        "name": "Rosca Direta com Barra",
+        "series": 4,
+        "reps": "10-12",
+        "weight": "25",
+        "rest": 60,
+        "notes": "Mantenha os cotovelos colados ao tronco.",
+        "gif_file": "Rosca Direta com Barra.gif",
+        "category": "Bíceps"
+      },
+      {
+        "name": "Rosca martelo",
+        "series": 3,
+        "reps": "12",
+        "weight": "14",
+        "rest": 60,
+        "notes": "Trabalha braquial e braquiorradial.",
+        "gif_file": "Rosca martelo.gif",
+        "category": "Bíceps"
+      }
+    ]
+  },
+  {
+    "id": "preset_ppl_legs",
+    "title": "Legs 1 — Quadríceps, Isquiotibiais & Panturrilhas",
+    "category": "PPL (Push / Pull / Legs)",
+    "icon": "legs",
+    "description": "Treino completo de membros inferiores com foco em força funcional e hipertrofia.",
+    "exercises": [
+      {
+        "name": "Agachamento Barra",
+        "series": 4,
+        "reps": "8-10",
+        "weight": "70",
+        "rest": 120,
+        "notes": "Quebre a linha paralela com controle.",
+        "gif_file": "Agachamento Barra.gif",
+        "category": "Pernas"
+      },
+      {
+        "name": "Leg Press",
+        "series": 4,
+        "reps": "10-12",
+        "weight": "180",
+        "rest": 90,
+        "notes": "Pés na largura dos ombros, não hiperestenda joelhos.",
+        "gif_file": "Leg Press.gif",
+        "category": "Pernas"
+      },
+      {
+        "name": "Cadeira extensora",
+        "series": 3,
+        "reps": "12-15",
+        "weight": "50",
+        "rest": 60,
+        "notes": "Segure 1 segundo no topo da contração.",
+        "gif_file": "Cadeira extensora.gif",
+        "category": "Pernas"
+      },
+      {
+        "name": "Stiff com barra",
+        "series": 4,
+        "reps": "10-12",
+        "weight": "50",
+        "rest": 90,
+        "notes": "Empurre o quadril para trás sentindo o posterior esticar.",
+        "gif_file": "Stiff com barra.gif",
+        "category": "Pernas"
+      },
+      {
+        "name": "Mesa flexora",
+        "series": 4,
+        "reps": "12",
+        "weight": "40",
+        "rest": 60,
+        "notes": "Controle a fase excêntrica.",
+        "gif_file": "Mesa flexora.gif",
+        "category": "Pernas"
+      },
+      {
+        "name": "Elevação de panturrilha em pé",
+        "series": 5,
+        "reps": "15-20",
+        "weight": "40",
+        "rest": 45,
+        "notes": "Alongamento máximo embaixo e contração total em cima.",
+        "gif_file": "Elevação de panturrilha em pé.gif",
+        "category": "Calistenia"
+      }
+    ]
+  },
+  {
+    "id": "preset_booty_legs",
+    "title": "Booty & Glúteos — Foco em Glúteo Máximo & Médio",
+    "category": "Especialização",
+    "icon": "glutes",
+    "description": "Rotina intensa desenhada para ativação e crescimento de glúteos e definição de pernas.",
+    "exercises": [
+      {
+        "name": "Elevação Pélvica Com Barra",
+        "series": 4,
+        "reps": "10-12",
+        "weight": "70",
+        "rest": 90,
+        "notes": "Segure 2 segundos no topo com glúteos contraídos.",
+        "gif_file": "Elevação Pélvica Com Barra.gif",
+        "category": "Glúteos"
+      },
+      {
+        "name": "Agachamento Búlgaro com Halteres",
+        "series": 3,
+        "reps": "10 cada",
+        "weight": "16",
+        "rest": 75,
+        "notes": "Incline ligeiramente o tronco à frente para mais glúteo.",
+        "gif_file": "Agachamento Búlgaro com Halteres.gif",
+        "category": "Pernas"
+      },
+      {
+        "name": "Agachamento Sumô com Halteres",
+        "series": 3,
+        "reps": "12-15",
+        "weight": "24",
+        "rest": 60,
+        "notes": "Pés abertos a 45 graus sobre step para amplitude extra.",
+        "gif_file": "Agachamento Sumô com Halteres.gif",
+        "category": "Pernas"
+      },
+      {
+        "name": "Glúteos na Polia Baixa",
+        "series": 3,
+        "reps": "15 cada",
+        "weight": "15",
+        "rest": 45,
+        "notes": "Movimento em arco focando no glúteo superior.",
+        "gif_file": "Glúteos na Polia Baixa.gif",
+        "category": "Glúteos"
+      },
+      {
+        "name": "Abdução de Quadril Sentado com Faixa Elástica",
+        "series": 4,
+        "reps": "20",
+        "weight": "Faixa Forte",
+        "rest": 45,
+        "notes": "Queimação contínua no glúteo médio.",
+        "gif_file": "Abdução de Quadril Sentado com Faixa Elástica.gif",
+        "category": "Funcional e HIT"
+      },
+      {
+        "name": "Stiff Unilateral com Halteres",
+        "series": 3,
+        "reps": "10 cada",
+        "weight": "14",
+        "rest": 60,
+        "notes": "Foco em estabilidade pélvica e posterior de coxa.",
+        "gif_file": "Stiff Unilateral com Halteres.gif",
+        "category": "Pernas"
+      }
+    ]
+  },
+  {
+    "id": "preset_calisthenics",
+    "title": "Calistenia Total — Peso Corporal & Controle",
+    "category": "Home & Calistenia",
+    "icon": "calisthenics",
+    "description": "Treine em qualquer lugar sem equipamentos usando alavancas corporais e alta densidade.",
+    "exercises": [
+      {
+        "name": "Barra Fixa",
+        "series": 4,
+        "reps": "Falha (8-12)",
+        "weight": "0",
+        "rest": 90,
+        "notes": "Queixo acima da barra, descida completa controlada.",
+        "gif_file": "Barra fixa.gif",
+        "category": "Costas"
+      },
+      {
+        "name": "Paralelas",
+        "series": 4,
+        "reps": "10-15",
+        "weight": "0",
+        "rest": 75,
+        "notes": "Descida a 90 graus de cotovelo.",
+        "gif_file": "Paralelas.gif",
+        "category": "Peitoral"
+      },
+      {
+        "name": "Flexão",
+        "series": 4,
+        "reps": "15-25",
+        "weight": "0",
+        "rest": 60,
+        "notes": "Peito quase tocando o solo, escápulas ativas.",
+        "gif_file": "Flexão.gif",
+        "category": "Calistenia"
+      },
+      {
+        "name": "Agachamento",
+        "series": 4,
+        "reps": "25-30",
+        "weight": "0",
+        "rest": 60,
+        "notes": "Ritmo constante sem pausas.",
+        "gif_file": "Agachamento.gif",
+        "category": "Calistenia"
+      },
+      {
+        "name": "Afundo Alternado com Salto",
+        "series": 3,
+        "reps": "12 cada",
+        "weight": "0",
+        "rest": 60,
+        "notes": "Explosão na subida e aterrissagem suave.",
+        "gif_file": "Afundo Alternado com Salto.gif",
+        "category": "Funcional e HIT"
+      },
+      {
+        "name": "Minhoca",
+        "series": 3,
+        "reps": "10",
+        "weight": "0",
+        "rest": 45,
+        "notes": "Caminhe com as mãos até prancha estendida.",
+        "gif_file": "Minhoca.gif",
+        "category": "Funcional e HIT"
+      }
+    ]
+  },
+  {
+    "id": "preset_mobility",
+    "title": "Mobilidade, Postura & Liberação Miofascial",
+    "category": "Saúde & Recuperação",
+    "icon": "mobility",
+    "description": "Melhore sua amplitude de movimento, alivie dores posturais e acelere a recuperação muscular.",
+    "exercises": [
+      {
+        "name": "Alongamento de quadril 90-90",
+        "series": 3,
+        "reps": "45s cada",
+        "weight": "0",
+        "rest": 30,
+        "notes": "Rotação interna e externa da cápsula do quadril.",
+        "gif_file": "Alongamento de quadril 90-90.gif",
+        "category": "Mobilidade"
+      },
+      {
+        "name": "Rolamento de espuma nas costas",
+        "series": 3,
+        "reps": "60s",
+        "weight": "0",
+        "rest": 30,
+        "notes": "Role suavemente pela coluna torácica evitando a lombar baixa.",
+        "gif_file": "Rolamento de espuma nas costas.gif",
+        "category": "Mobilidade"
+      },
+      {
+        "name": "Rolamento de espuma nos quadríceps",
+        "series": 3,
+        "reps": "60s cada",
+        "weight": "0",
+        "rest": 30,
+        "notes": "Encontre pontos de tensão (trigger points) e sustente.",
+        "gif_file": "Rolamento de espuma nos quadríceps.gif",
+        "category": "Mobilidade"
+      },
+      {
+        "name": "Alongamento do peitoral e do ombro na porta",
+        "series": 3,
+        "reps": "40s cada",
+        "weight": "0",
+        "rest": 30,
+        "notes": "Abra a caixa torácica e respire profundamente.",
+        "gif_file": "Alongamento do peitoral e do ombro na porta.gif",
+        "category": "Mobilidade"
+      },
+      {
+        "name": "Postura da Cobra - Alongamento Abdominal",
+        "series": 3,
+        "reps": "35s",
+        "weight": "0",
+        "rest": 30,
+        "notes": "Extensão gentil da cadeia anterior.",
+        "gif_file": "Postura da Cobra - Alongamento Abdominal.gif",
+        "category": "Mobilidade"
+      },
+      {
+        "name": "Alongamento Borboleta",
+        "series": 3,
+        "reps": "45s",
+        "weight": "0",
+        "rest": 30,
+        "notes": "Solte a musculatura adutora de forma relaxada.",
+        "gif_file": "Alongamento Borboleta.gif",
+        "category": "Mobilidade"
+      }
+    ]
+  },
+  {
+    "id": "preset_hiit",
+    "title": "HIIT Queima Extrema — Circuito Funcional",
+    "category": "Cardio & Queima",
+    "icon": "hiit",
+    "description": "Estímulo cardiovascular metabólico de alta intensidade para máxima queima calórica.",
+    "exercises": [
+      {
+        "name": "Burpees",
+        "series": 4,
+        "reps": "45s ativo",
+        "weight": "0",
+        "rest": 30,
+        "notes": "Ritmo consistente com salto final.",
+        "gif_file": "Burpees.gif",
+        "category": "Crossfit"
+      },
+      {
+        "name": "Escalador de Montanha",
+        "series": 4,
+        "reps": "45s ativo",
+        "weight": "0",
+        "rest": 30,
+        "notes": "Joelho em direção ao cotovelo em alta velocidade.",
+        "gif_file": "Escalador de Montanha.gif",
+        "category": "Funcional e HIT"
+      },
+      {
+        "name": "Balanços com Kettlebell",
+        "series": 4,
+        "reps": "20 reps",
+        "weight": "16",
+        "rest": 45,
+        "notes": "Explosão vinda do quadril (hip hinge).",
+        "gif_file": "Balanços com Kettlebell.gif",
+        "category": "Crossfit"
+      },
+      {
+        "name": "Polichinelos",
+        "series": 4,
+        "reps": "60s ativo",
+        "weight": "0",
+        "rest": 30,
+        "notes": "Cardio contínuo e solto.",
+        "gif_file": "Polichinelos.gif",
+        "category": "Funcional e HIT"
+      },
+      {
+        "name": "Agachamento com Salto",
+        "series": 4,
+        "reps": "15 reps",
+        "weight": "0",
+        "rest": 45,
+        "notes": "Potência vertical máxima.",
+        "gif_file": "Agachamento com Salto.gif",
+        "category": "Calistenia"
+      }
+    ]
+  }
+]
