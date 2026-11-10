@@ -8,12 +8,12 @@ android {
         noCompress "gif"
     }
     namespace 'br.com.treinofit'
-    compileSdk 34
+    compileSdk 36
 
     defaultConfig {
         applicationId "br.com.treinofit"
         minSdk 26
-        targetSdk 34
+        targetSdk 36
         versionCode 1
         versionName "1.0.0"
     }
@@ -22,13 +22,26 @@ android {
         buildConfig true
     }
 
+    // Senhas da chave fora do git (o repositorio e publico): android/keystore.properties, ignorado.
+    def chave = new Properties()
+    def arqChave = rootProject.file("keystore.properties")
+    if (arqChave.exists()) arqChave.withInputStream { chave.load(it) }
+    signingConfigs {
+        release {
+            storeFile file("release.jks")
+            storePassword chave.getProperty("storePassword", "")
+            keyAlias chave.getProperty("keyAlias", "release")
+            keyPassword chave.getProperty("keyPassword", "")
+        }
+    }
+
     buildTypes {
         debug {
             minifyEnabled false
         }
         release {
             minifyEnabled false
-            signingConfig signingConfigs.debug
+            signingConfig signingConfigs.release
         }
     }
 
@@ -54,4 +67,3 @@ dependencies {
     implementation 'androidx.activity:activity-ktx:1.9.2'
     implementation 'org.nanohttpd:nanohttpd:2.3.1'
 }
-

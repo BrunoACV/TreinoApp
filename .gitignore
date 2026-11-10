@@ -28,3 +28,8 @@ node_modules/
 
 # Logs
 *.log
+
+# senhas da chave de assinatura e a propria chave: nunca no git (repositorio publico)
+android/keystore.properties
+*.jks
+*.keystore
