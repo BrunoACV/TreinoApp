@@ -1,13 +1,25 @@
 package br.com.treinofit
 
 import android.annotation.SuppressLint
+import android.Manifest
 import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.content.res.Configuration
+import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
 import android.view.WindowManager
+import android.webkit.RenderProcessGoneDetail
+import android.widget.FrameLayout
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
 import android.webkit.ConsoleMessage
 import android.webkit.JavascriptInterface
 import android.webkit.JsResult
@@ -32,6 +44,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var web: WebView
     private var server: ApiServer? = null
     private var porta = 0
+    private lateinit var raiz: FrameLayout
+    private var temaEscuro = true
 
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -49,16 +63,30 @@ class MainActivity : AppCompatActivity() {
             }
         ).also { it.start(5000, false) }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            window.statusBarColor = 0xFF000000.toInt()
-            window.navigationBarColor = 0xFF000000.toInt()
-        }
-
+        // Android 15+ desenha por baixo das barras: a moldura recua pelo tamanho delas (e do teclado)
+        // e sua cor de fundo, igual à do tema, é o que aparece atrás da barra de status.
         web = WebView(this)
-        setContentView(web)
+        raiz = FrameLayout(this).apply { addView(web) }
+        setContentView(raiz)
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+        ViewCompat.setOnApplyWindowInsetsListener(raiz) { v, insets ->
+            val b = insets.getInsets(
+                WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout() or WindowInsetsCompat.Type.ime()
+            )
+            v.setPadding(b.left, b.top, b.right, b.bottom)
+            WindowInsetsCompat.CONSUMED
+        }
+        aplicarBarras(
+            when (getSharedPreferences("TreinoFitStorage", Context.MODE_PRIVATE).getString("treinofit_theme_scheme", "system")) {
+                "dark" -> true
+                "light" -> false
+                else -> sistemaEscuro(resources.configuration)
+            }
+        )
 
         WebView.setWebContentsDebuggingEnabled(BuildConfig.DEBUG)
-        web.setBackgroundColor(0xFF000000.toInt())
+        // O renderizador não perde prioridade quando o app sai da frente
+        web.setRendererPriorityPolicy(WebView.RENDERER_PRIORITY_IMPORTANT, false)
 
         with(web.settings) {
             javaScriptEnabled = true
@@ -131,6 +159,14 @@ class MainActivity : AppCompatActivity() {
                 android.util.Log.e("TreinoFit", "Erro WebViewClient: ${error?.description} em ${request?.url}")
             }
 
+            // Se o sistema matar o renderizador, recria a tela em vez de derrubar o app; o treino volta do que foi salvo
+            override fun onRenderProcessGone(view: WebView?, detail: RenderProcessGoneDetail?): Boolean {
+                raiz.removeView(web)
+                // Morto pelo sistema: recria. Crash de verdade: fecha a tela, sem laço de recriação.
+                if (detail?.didCrash() == true) finish() else recreate()
+                return true
+            }
+
             override fun onPageFinished(view: WebView?, url: String?) {
                 super.onPageFinished(view, url)
                 injetarCoresDinamicas(view)
@@ -144,7 +180,7 @@ class MainActivity : AppCompatActivity() {
             }
 
             override fun onJsAlert(view: WebView?, url: String?, message: String?, result: JsResult?): Boolean {
-                AlertDialog.Builder(this@MainActivity)
+                AlertDialog.Builder(this@MainActivity, temaDialogo())
                     .setTitle("TreinoFit")
                     .setMessage(message)
                     .setPositiveButton(android.R.string.ok) { _, _ -> result?.confirm() }
@@ -155,7 +191,7 @@ class MainActivity : AppCompatActivity() {
             }
 
             override fun onJsConfirm(view: WebView?, url: String?, message: String?, result: JsResult?): Boolean {
-                AlertDialog.Builder(this@MainActivity)
+                AlertDialog.Builder(this@MainActivity, temaDialogo())
                     .setTitle("TreinoFit")
                     .setMessage(message)
                     .setPositiveButton("Sim") { _, _ -> result?.confirm() }
@@ -185,7 +221,36 @@ class MainActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         server?.stop()
+        web.destroy() // senão a página antiga segue viva e regrava o treino com estado velho
     }
+
+    // uiMode está em configChanges: trocar o modo escuro do sistema avisa a página em vez de reiniciar a tela
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        web.evaluateJavascript("window.__systemTheme && window.__systemTheme(${sistemaEscuro(newConfig)})", null)
+    }
+
+    private fun sistemaEscuro(c: Configuration) =
+        (c.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
+
+    private fun temaDialogo() =
+        if (temaEscuro) androidx.appcompat.R.style.Theme_AppCompat_Dialog_Alert
+        else androidx.appcompat.R.style.Theme_AppCompat_Light_Dialog_Alert
+
+    private fun aplicarBarras(escuro: Boolean) {
+        temaEscuro = escuro
+        val fundo = if (escuro) Color.BLACK else Color.WHITE
+        raiz.setBackgroundColor(fundo)
+        web.setBackgroundColor(fundo)
+        @Suppress("DEPRECATION") // até o Android 14 a barra tem cor própria; do 15 em diante é ignorado
+        run { window.statusBarColor = fundo; window.navigationBarColor = fundo }
+        WindowCompat.getInsetsController(window, raiz).apply {
+            isAppearanceLightStatusBars = !escuro
+            isAppearanceLightNavigationBars = !escuro
+        }
+    }
+
+    private fun servicoTreino(acao: String) = Intent(this, WorkoutService::class.java).setAction(acao)
 
     private fun encontrarPortaLivre(): Int {
         val portaFixa = 28765
@@ -219,6 +284,53 @@ class MainActivity : AppCompatActivity() {
     }
 
     inner class AndroidBridge {
+
+        @JavascriptInterface
+        fun isSystemDark(): Boolean = sistemaEscuro(resources.configuration)
+
+        @JavascriptInterface
+        fun setBars(dark: Boolean) {
+            runOnUiThread { aplicarBarras(dark) }
+        }
+
+        @JavascriptInterface
+        fun workoutStart(title: String, startedAt: String) {
+            runOnUiThread {
+                if (Build.VERSION.SDK_INT >= 33 &&
+                    ContextCompat.checkSelfPermission(this@MainActivity, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+                ) {
+                    ActivityCompat.requestPermissions(this@MainActivity, arrayOf(Manifest.permission.POST_NOTIFICATIONS), 1)
+                }
+                runCatching {
+                    ContextCompat.startForegroundService(
+                        this@MainActivity,
+                        servicoTreino(WorkoutService.ACTION_START)
+                            .putExtra(WorkoutService.EXTRA_TITLE, title)
+                            .putExtra(WorkoutService.EXTRA_TIME, startedAt.toLongOrNull() ?: System.currentTimeMillis())
+                    )
+                }.onFailure { android.util.Log.e("TreinoFit", "Serviço de treino não iniciou: ${it.message}") }
+            }
+        }
+
+        @JavascriptInterface
+        fun workoutRest(endsAt: String, vibrate: Boolean, sound: Boolean) {
+            // startService comum: o serviço já está em primeiro plano desde o workoutStart
+            runOnUiThread {
+                runCatching {
+                    startService(
+                        servicoTreino(WorkoutService.ACTION_REST)
+                            .putExtra(WorkoutService.EXTRA_TIME, endsAt.toLongOrNull() ?: 0L)
+                            .putExtra(WorkoutService.EXTRA_VIBRATE, vibrate)
+                            .putExtra(WorkoutService.EXTRA_SOUND, sound)
+                    )
+                }
+            }
+        }
+
+        @JavascriptInterface
+        fun workoutStop() {
+            runOnUiThread { stopService(Intent(this@MainActivity, WorkoutService::class.java)) }
+        }
 
         @JavascriptInterface
         fun saveData(key: String, value: String) {

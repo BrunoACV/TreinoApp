@@ -98,7 +98,7 @@ class ApiServer(
                 if (assetPath.endsWith(".html")) {
                     it.addHeader("Cache-Control", "no-cache")
                 } else {
-                    it.addHeader("Cache-Control", "public, max-age=86400")
+                    it.addHeader("Cache-Control", "no-cache") // senao o WebView segura CSS/JS velhos apos atualizar o APK
                 }
             }
         }
