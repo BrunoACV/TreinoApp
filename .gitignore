@@ -36,3 +36,6 @@ android/keystore.properties
 
 # Mapa do projeto (Graphify)
 graphify-out/
+
+# Miniaturas geradas dos GIFs (scripts/gerar_miniaturas.py)
+android/app/src/main/assets/thumbs/

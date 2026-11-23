@@ -2,6 +2,11 @@ package br.com.treinofit
 
 import android.annotation.SuppressLint
 import android.Manifest
+import android.content.ContentValues
+import android.net.Uri
+import android.provider.MediaStore
+import androidx.activity.result.contract.ActivityResultContracts
+import java.time.LocalDate
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -47,9 +52,27 @@ class MainActivity : AppCompatActivity() {
     private lateinit var raiz: FrameLayout
     private var temaEscuro = true
 
+    // Importar backup: o seletor de arquivos devolve o JSON para a página fundir com os dados atuais
+    private val importarBackup = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        if (uri == null) return@registerForActivityResult
+        val texto = runCatching { contentResolver.openInputStream(uri)?.use { it.readBytes().decodeToString() } }.getOrNull()
+        web.evaluateJavascript("window.__importBackup(${JSONObject.quote(texto ?: "")})", null)
+    }
+
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Cópia única dos dados como estavam antes desta versão gravar qualquer coisa:
+        // se algo sumir numa atualização, o original fica em files/resgate-dados para ser recuperado.
+        runCatching {
+            val destino = File(filesDir, "resgate-dados")
+            if (!destino.exists()) {
+                val dados = File(applicationInfo.dataDir)
+                File(dados, "shared_prefs").copyRecursively(File(destino, "shared_prefs")) { _, _ -> OnErrorAction.SKIP }
+                File(dados, "app_webview/Default/Local Storage").copyRecursively(File(destino, "local_storage")) { _, _ -> OnErrorAction.SKIP }
+            }
+        }
 
         // Inicializa servidor HTTP interno escutando somente em 127.0.0.1
         porta = encontrarPortaLivre()
@@ -239,7 +262,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun aplicarBarras(escuro: Boolean) {
         temaEscuro = escuro
-        val fundo = if (escuro) Color.BLACK else Color.WHITE
+        val fundo = if (escuro) Color.BLACK else Color.rgb(0xF3, 0xF3, 0xF6) // igual ao --bg de cada tema no CSS
         raiz.setBackgroundColor(fundo)
         web.setBackgroundColor(fundo)
         @Suppress("DEPRECATION") // até o Android 14 a barra tem cor própria; do 15 em diante é ignorado
@@ -287,6 +310,52 @@ class MainActivity : AppCompatActivity() {
 
         @JavascriptInterface
         fun isSystemDark(): Boolean = sistemaEscuro(resources.configuration)
+
+        /**
+         * Grava o backup em Downloads/TreinoFit, fora da área do app: sobrevive a desinstalar e reinstalar.
+         * Um arquivo por dia (o do dia é regravado) e os últimos 14 dias ficam guardados,
+         * para um dia ruim não apagar a cópia boa da véspera.
+         */
+        @JavascriptInterface
+        fun exportBackup(json: String): String {
+            if (Build.VERSION.SDK_INT < 29) return ""
+            return runCatching {
+                val prefs = getSharedPreferences("TreinoFitBackup", Context.MODE_PRIVATE)
+                val hoje = LocalDate.now()
+                val chave = "uri_$hoje"
+                fun escrever(u: Uri) = contentResolver.openOutputStream(u, "wt")!!.use { it.write(json.toByteArray()) }
+
+                val salvo = prefs.getString(chave, null)?.let(Uri::parse)
+                if (salvo == null || runCatching { escrever(salvo) }.isFailure) {
+                    val valores = ContentValues().apply {
+                        put(MediaStore.Downloads.DISPLAY_NAME, "treinofit-backup-$hoje.json")
+                        put(MediaStore.Downloads.MIME_TYPE, "application/json")
+                        put(MediaStore.Downloads.RELATIVE_PATH, "Download/TreinoFit")
+                    }
+                    val novo = contentResolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, valores)!!
+                    escrever(novo)
+                    val editor = prefs.edit().putString(chave, novo.toString())
+                    prefs.all.keys.filter { it.startsWith("uri_") && it != chave }.forEach { antiga ->
+                        val dia = runCatching { LocalDate.parse(antiga.removePrefix("uri_")) }.getOrNull()
+                        if (dia == null || dia.isBefore(hoje.minusDays(14))) {
+                            runCatching { contentResolver.delete(Uri.parse(prefs.getString(antiga, "")), null, null) }
+                            editor.remove(antiga)
+                        }
+                    }
+                    editor.apply()
+                }
+                "Downloads/TreinoFit"
+            }.getOrElse {
+                android.util.Log.e("TreinoFit", "Backup não gravado: ${it.message}")
+                ""
+            }
+        }
+
+        @JavascriptInterface
+        fun pickBackup(): Boolean {
+            runOnUiThread { runCatching { importarBackup.launch("*/*") } }
+            return true
+        }
 
         @JavascriptInterface
         fun setBars(dark: Boolean) {

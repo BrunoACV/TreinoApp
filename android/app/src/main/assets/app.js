@@ -8,6 +8,7 @@
         'Bíceps', 'Tríceps', 'Trapézio', 'Panturrilhas', 'Antebraços',
         'Eretor Lombar', 'Calistenia', 'Cardio', 'Funcional e HIT', 'Mobilidade', 'Crossfit'
     ];
+    const EQUIPMENTS = ['Barra', 'Halteres', 'Cabo / Polia', 'Máquina', 'Peso Corporal', 'Elástico / Faixa', 'Smith', 'Kettlebell', 'Rolo de Espuma'];
     const ACTIVE_KEY = 'treinofit_active';
     const ACTIVE_MAX_AGE_MS = 12 * 3600 * 1000; // treino esquecido aberto não volta no dia seguinte
 
@@ -24,26 +25,34 @@
         selectedEquipment: '',
         searchQuery: '',
         pageIndex: 0,
-        pageSize: 24,
+        pageSize: 30,
 
         activeWorkout: null,
         activeExerciseIndex: 0,
         activeWorkoutStartTime: null,
         restEndsAt: 0,
+        restTotalMs: 0,
         tickInterval: null,
 
-        currentModal: null,
         editingWorkout: null
     };
+
+    // Versão do app no endereço de tudo que é buscado: depois de atualizar, nada vem do cache antigo
+    const V = new URL(document.currentScript.src).searchParams.get('v') || '0';
+    const asset = (name) => `${name}?v=${V}`;
 
     const $ = (id) => document.getElementById(id);
     const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
     const gifUrl = (file) => `/gifs/${encodeURIComponent(file)}`;
+    // Miniatura estática (poucos KB): as listas não carregam GIF animado de 2-3 MB
+    const thumbUrl = (file) => `/thumbs/${encodeURIComponent(String(file).replace(/\.gif$/i, '.webp'))}?v=${V}`;
+    const thumbImg = (file, alt = '') => `<img src="${thumbUrl(file)}" alt="${esc(alt)}" loading="lazy" onerror="this.style.visibility='hidden'">`;
     const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
     const clock = (secs) => `${String(Math.floor(secs / 60)).padStart(2, '0')}:${String(secs % 60).padStart(2, '0')}`;
+    const gifOf = (item) => item.gif_file || `${item.name}.gif`;
     const newExerciseItem = (ex) => ({
         name: ex.name,
-        gif_file: ex.gif_file || `${ex.name}.gif`,
+        gif_file: gifOf(ex),
         category: ex.category,
         series: 3,
         reps: '10-12',
@@ -84,7 +93,6 @@
     };
     const Native = {
         has: !!A,
-        toast(msg) { if (call('toast', msg) === null && !A) console.log('[Toast]', msg); },
         vibrate(ms) {
             if (!state.settings.vibration) return;
             if (A) call('vibrate', ms); else if (navigator.vibrate) navigator.vibrate(ms);
@@ -115,10 +123,85 @@
         }
     };
 
+    // --- Avisos e confirmações do próprio app (nada de caixa padrão do Android) ---
+    let toastTimer;
+    function toast(msg) {
+        const t = $('toast');
+        t.textContent = msg;
+        t.classList.add('show');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => t.classList.remove('show'), 2600);
+    }
+
+    const modalStack = [];
+    function openModal(id) {
+        const el = $(id);
+        clearTimeout(el._closeTimer);
+        el.classList.remove('closing');
+        el.classList.add('active');
+        if (!modalStack.includes(id)) modalStack.push(id);
+    }
+    function closeModal(id) {
+        const i = modalStack.indexOf(id);
+        if (i < 0) return;
+        modalStack.splice(i, 1);
+        const el = $(id);
+        el.classList.add('closing');
+        el._closeTimer = setTimeout(() => el.classList.remove('active', 'closing'), 180);
+    }
+
+    let confirmResolve = null;
+    function ask(title, text = '', okLabel = 'Confirmar', danger = false) {
+        return new Promise(resolve => {
+            $('confirm-title').textContent = title;
+            $('confirm-text').textContent = text;
+            $('confirm-text').hidden = !text;
+            const ok = $('confirm-ok');
+            ok.textContent = okLabel;
+            ok.className = `btn grow ${danger ? 'btn-danger-solid' : 'btn-primary'}`;
+            confirmResolve = resolve;
+            openModal('modal-confirm');
+        });
+    }
+    function settleConfirm(value) {
+        if (!confirmResolve) return;
+        const resolve = confirmResolve;
+        confirmResolve = null;
+        closeModal('modal-confirm');
+        resolve(value);
+    }
+
+    // Folha com lista de opções; devolve o valor escolhido (ou undefined se fechar)
+    let optionsResolve = null;
+    function pickOption(title, options, current) {
+        return new Promise(resolve => {
+            $('options-title').textContent = title;
+            const list = $('options-list');
+            list.innerHTML = '';
+            options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = `option ${opt.value === current ? 'active' : ''}`;
+                btn.innerHTML = `<span>${esc(opt.label)}</span>${opt.hint ? `<small>${esc(opt.hint)}</small>` : ''}`;
+                btn.addEventListener('click', () => settleOptions(opt.value));
+                list.appendChild(btn);
+            });
+            optionsResolve = resolve;
+            openModal('modal-options');
+        });
+    }
+    function settleOptions(value) {
+        if (!optionsResolve) return;
+        const resolve = optionsResolve;
+        optionsResolve = null;
+        closeModal('modal-options');
+        resolve(value);
+    }
+
     // --- Tema (claro/escuro/sistema) e cor de destaque ---
     const ThemeService = {
         scheme: 'system', // system | dark | light
-        palette: 'bw',    // bw | dynamic
+        palette: 'brand', // brand | dynamic | bw
         systemDark: true,
         dynamicColors: null,
 
@@ -127,7 +210,7 @@
             const sys = call('isSystemDark');
             this.systemDark = sys === null ? !matchMedia('(prefers-color-scheme: light)').matches : !!sys;
             this.scheme = Storage.get('treinofit_theme_scheme') || 'system';
-            this.palette = Storage.get('treinofit_theme_mode') || (this.dynamicSupported() ? 'dynamic' : 'bw');
+            this.palette = Storage.get('treinofit_theme_mode') || 'brand';
 
             this.bindSegmented('setting-theme-scheme', 'scheme', 'treinofit_theme_scheme');
             this.bindSegmented('setting-theme-palette', 'palette', 'treinofit_theme_mode');
@@ -151,7 +234,7 @@
             const dark = this.scheme === 'system' ? this.systemDark : this.scheme === 'dark';
             const dynamic = this.palette === 'dynamic' && this.dynamicSupported();
             root.dataset.theme = dark ? 'dark' : 'light';
-            root.dataset.palette = dynamic ? 'dynamic' : 'bw';
+            root.dataset.palette = dynamic ? 'dynamic' : (this.palette === 'bw' ? 'bw' : 'brand');
             if (dynamic) {
                 root.style.setProperty('--dyn-light', this.dynamicColors.accentLight);
                 root.style.setProperty('--dyn-dark', this.dynamicColors.accentDark);
@@ -160,9 +243,11 @@
 
             document.querySelectorAll('#setting-theme-scheme button').forEach(b => b.classList.toggle('active', b.dataset.value === this.scheme));
             document.querySelectorAll('#setting-theme-palette button').forEach(b => b.classList.toggle('active', b.dataset.value === this.palette));
-            $('setting-theme-desc').textContent = this.palette === 'bw'
-                ? 'Monocromático, alto contraste.'
-                : (dynamic ? 'Acompanha a cor do seu Android.' : 'Disponível a partir do Android 12.');
+            $('setting-theme-desc').textContent = {
+                brand: 'Laranja do TreinoFit.',
+                bw: 'Preto e branco, alto contraste.',
+                dynamic: dynamic ? 'Acompanha a cor do seu Android.' : 'Disponível a partir do Android 12.'
+            }[this.palette];
         }
     };
 
@@ -179,31 +264,86 @@
 
     // --- Dados salvos ---
     function loadPersistedData() {
-        try {
-            const favs = Storage.get('treinofit_favs');
-            if (favs) state.favorites = new Set(JSON.parse(favs));
-            const workouts = Storage.get('treinofit_custom_workouts');
-            if (workouts) state.customWorkouts = JSON.parse(workouts);
-            const history = Storage.get('treinofit_history');
-            if (history) state.history = JSON.parse(history);
-            const settings = Storage.get('treinofit_settings');
-            if (settings) state.settings = { ...state.settings, ...JSON.parse(settings) };
-        } catch (e) {
-            console.error('Erro ao ler persistência', e);
-        }
+        const read = (key, apply) => {
+            try {
+                const raw = Storage.get(key);
+                if (raw) apply(JSON.parse(raw));
+            } catch (e) {
+                console.error('Erro ao ler', key, e); // um dado ruim não derruba os outros
+            }
+        };
+        read('treinofit_favs', v => { state.favorites = new Set(v); });
+        read('treinofit_custom_workouts', v => { if (Array.isArray(v)) state.customWorkouts = v; });
+        read('treinofit_history', v => { if (Array.isArray(v)) state.history = v; });
+        read('treinofit_settings', v => { state.settings = { ...state.settings, ...v }; });
     }
 
     function saveCustomWorkouts() {
         Storage.set('treinofit_custom_workouts', state.customWorkouts);
         renderCustomWorkouts();
+        scheduleBackup();
     }
     function saveFavorites() {
         Storage.set('treinofit_favs', [...state.favorites]);
         updateFavoritesBadge();
+        scheduleBackup();
     }
     function saveHistory() {
         Storage.set('treinofit_history', state.history);
         renderHistory();
+        renderHomeStats();
+        scheduleBackup();
+    }
+
+    // --- Cópia de segurança fora do app (Downloads/TreinoFit): sobrevive a reinstalação ---
+    const backupPayload = () => JSON.stringify({
+        app: 'TreinoFit',
+        version: 1,
+        exportedAt: new Date().toISOString(),
+        customWorkouts: state.customWorkouts,
+        history: state.history,
+        favorites: [...state.favorites],
+        settings: state.settings
+    });
+
+    let backupTimer;
+    function scheduleBackup() {
+        clearTimeout(backupTimer);
+        backupTimer = setTimeout(() => call('exportBackup', backupPayload()), 1500);
+    }
+
+    // União por id; o que vem do arquivo vence (é a cópia que a pessoa escolheu restaurar)
+    function mergeById(current, incoming) {
+        const map = new Map(current.map(x => [x.id, x]));
+        (incoming || []).forEach(x => { if (x && x.id) map.set(x.id, x); });
+        return [...map.values()];
+    }
+
+    window.__importBackup = function (text) {
+        try {
+            const b = JSON.parse(text);
+            if (!b || (!Array.isArray(b.customWorkouts) && !Array.isArray(b.history))) throw new Error('formato');
+            state.customWorkouts = mergeById(state.customWorkouts, b.customWorkouts).filter(w => Array.isArray(w.exercises));
+            state.history = mergeById(state.history, b.history).sort((x, y) => String(y.date).localeCompare(String(x.date)));
+            (b.favorites || []).forEach(f => state.favorites.add(f));
+            saveCustomWorkouts();
+            saveHistory();
+            saveFavorites();
+            renderFavorites();
+            toast(`Importado: ${plural(state.customWorkouts.length, 'treino', 'treinos')} e ${plural(state.history.length, 'registro', 'registros')}`);
+        } catch (e) {
+            console.error('Backup inválido', e);
+            toast('Esse arquivo não é um backup do TreinoFit.');
+        }
+    };
+
+    // Treinos que vêm embutidos no app: entram só os que ainda não existem (por id)
+    async function addDefaultWorkouts() {
+        const defaults = await (await fetch(asset('default_custom_workouts.json'))).json();
+        const have = new Set(state.customWorkouts.map(w => w.id));
+        const missing = defaults.filter(w => !have.has(w.id));
+        state.customWorkouts.push(...missing);
+        return missing.length;
     }
 
     // --- Início ---
@@ -216,14 +356,23 @@
         setupModals();
         setupPlayer();
         setupAndroidBackHandler();
+        renderHomeHeader();
 
         try {
-            const [exRes, preRes] = await Promise.all([fetch('exercises.json'), fetch('presets.json')]);
+            const [exRes, preRes] = await Promise.all([fetch(asset('exercises.json')), fetch(asset('presets.json'))]);
             state.exercises = await exRes.json();
             state.presets = await preRes.json();
 
-            // Treinos antigos sem gif_file/categoria ganham os dados do catálogo
             let updated = false;
+            if (!Storage.get('treinofit_defaults_seeded')) {
+                try {
+                    if (await addDefaultWorkouts()) updated = true;
+                    Storage.set('treinofit_defaults_seeded', '1');
+                } catch (e) {
+                    console.error('Treinos embutidos indisponíveis', e);
+                }
+            }
+            // Treinos antigos sem gif_file/categoria ganham os dados do catálogo
             state.customWorkouts.forEach(w => (w.exercises || []).forEach(item => {
                 if (!item.gif_file) { fillFromCatalog(item); updated = true; }
             }));
@@ -237,11 +386,13 @@
             renderPresetWorkouts();
             renderCustomWorkouts();
             renderHistory();
+            renderHomeStats();
             updateFavoritesBadge();
             restoreActiveWorkout();
+            scheduleBackup(); // já na primeira abertura fica uma cópia fora do app
         } catch (err) {
             console.error('Erro ao carregar dados iniciais:', err);
-            Native.toast('Erro ao carregar o banco de exercícios');
+            toast('Erro ao carregar o banco de exercícios');
         }
     }
 
@@ -257,30 +408,35 @@
             btn.addEventListener('click', () => switchView(btn.dataset.view));
         });
         $('btn-create-workout-hero').addEventListener('click', () => openWorkoutEditor());
-        ['custom', 'preset'].forEach(kind => {
-            $(`toggle-${kind}-workouts`).addEventListener('click', () => $(`section-${kind}-workouts`).classList.toggle('collapsed'));
-        });
     }
 
     function switchView(viewId) {
+        if (viewId === state.currentView) {
+            $('main-scroll').scrollTo({ top: 0, behavior: 'smooth' });
+            return;
+        }
         state.currentView = viewId;
         document.querySelectorAll('.view').forEach(v => v.classList.toggle('active', v.id === viewId));
-        document.querySelectorAll('.bottom-nav .nav-item').forEach(b => b.classList.toggle('active', b.dataset.view === viewId));
+        document.querySelectorAll('.bottom-nav .nav-item').forEach((b, i) => {
+            const on = b.dataset.view === viewId;
+            b.classList.toggle('active', on);
+            if (on) $('nav-pill').style.setProperty('--i', i);
+        });
         $('main-scroll').scrollTop = 0;
 
+        if (viewId === 'view-workouts') { renderHomeHeader(); renderHomeStats(); }
         if (viewId === 'view-favorites') renderFavorites();
         if (viewId === 'view-history') renderHistory();
-        if (viewId === 'view-settings') checkOfflineStatus();
     }
 
     function setupAndroidBackHandler() {
         window.__onBack = function () {
+            const top = modalStack[modalStack.length - 1];
+            if (top === 'modal-confirm') { settleConfirm(false); return true; }
+            if (top === 'modal-options') { settleOptions(undefined); return true; }
+            if (top) { closeModal(top); return true; }
             if ($('modal-workout-player').classList.contains('active')) {
                 confirmCancelWorkout();
-                return true;
-            }
-            if (state.currentModal) {
-                closeModal(state.currentModal);
                 return true;
             }
             if (state.currentView !== 'view-workouts') {
@@ -289,6 +445,25 @@
             }
             return false;
         };
+    }
+
+    // --- Início: saudação e números ---
+    function renderHomeHeader() {
+        const now = new Date();
+        const h = now.getHours();
+        $('home-greeting').textContent = h < 12 ? 'Bom dia.' : h < 18 ? 'Boa tarde.' : 'Boa noite.';
+        $('home-date').textContent = now.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'short' }).replace('.', '');
+    }
+
+    function renderHomeStats() {
+        const now = new Date();
+        const monday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - ((now.getDay() + 6) % 7));
+        $('home-stat-week').textContent = state.history.filter(hh => new Date(hh.date) >= monday).length;
+        $('home-stat-total').textContent = state.history.length;
+        const last = state.history[0];
+        if (!last) { $('home-stat-last').textContent = '—'; return; }
+        const days = Math.floor((new Date(now.getFullYear(), now.getMonth(), now.getDate()) - new Date(new Date(last.date).toDateString())) / 86400000);
+        $('home-stat-last').textContent = days <= 0 ? 'hoje' : days === 1 ? 'ontem' : `${days} dias`;
     }
 
     // --- Filtros de exercício ---
@@ -316,18 +491,22 @@
         let debounceTimer;
         searchInput.addEventListener('input', (e) => {
             state.searchQuery = e.target.value.trim().toLowerCase();
-            clearBtn.style.display = state.searchQuery ? 'block' : 'none';
+            clearBtn.hidden = !state.searchQuery;
             clearTimeout(debounceTimer);
-            debounceTimer = setTimeout(applyExerciseFilters, 180);
+            debounceTimer = setTimeout(applyExerciseFilters, 160);
         });
         clearBtn.addEventListener('click', () => {
             searchInput.value = '';
             state.searchQuery = '';
-            clearBtn.style.display = 'none';
+            clearBtn.hidden = true;
             applyExerciseFilters();
         });
-        $('equipment-select').addEventListener('change', (e) => {
-            state.selectedEquipment = e.target.value;
+        $('btn-equipment').addEventListener('click', async () => {
+            const options = [{ value: '', label: 'Todos os equipamentos' }, ...EQUIPMENTS.map(e => ({ value: e, label: e }))];
+            const picked = await pickOption('Equipamento', options, state.selectedEquipment);
+            if (picked === undefined) return;
+            state.selectedEquipment = picked;
+            $('btn-equipment').textContent = `Equipamento: ${picked ? picked.toLowerCase() : 'todos'}`;
             applyExerciseFilters();
         });
 
@@ -335,7 +514,7 @@
         const scroller = $('main-scroll');
         scroller.addEventListener('scroll', () => {
             if (state.currentView !== 'view-exercises') return;
-            if (scroller.scrollTop + scroller.clientHeight >= scroller.scrollHeight - 400) appendNextExercisesPage();
+            if (scroller.scrollTop + scroller.clientHeight >= scroller.scrollHeight - 600) appendNextExercisesPage();
         }, { passive: true });
     }
 
@@ -361,7 +540,7 @@
         batch.forEach(ex => fragment.appendChild(createExerciseCard(ex)));
         $('exercises-grid').appendChild(fragment);
         if (batch.length) state.pageIndex++;
-        $('infinite-scroll-sentinel').style.display = state.pageIndex * state.pageSize >= state.filteredExercises.length ? 'none' : 'block';
+        $('infinite-scroll-sentinel').hidden = state.pageIndex * state.pageSize >= state.filteredExercises.length;
     }
 
     function createExerciseCard(exercise) {
@@ -369,10 +548,10 @@
         card.className = 'exercise-card';
         const isFav = state.favorites.has(exercise.id);
         card.innerHTML = `
-            <div class="gif-frame"><img src="${gifUrl(exercise.gif_file)}" alt="${esc(exercise.name)}" loading="lazy"></div>
+            <div class="media">${thumbImg(gifOf(exercise), exercise.name)}</div>
             <button class="fav-btn ${isFav ? 'active' : ''}">${isFav ? 'Salvo' : 'Salvar'}</button>
             <div class="exercise-card-info">
-                <span class="eyebrow">${esc(exercise.category)}</span>
+                <span class="eyebrow accent">${esc(exercise.category)}</span>
                 <div class="exercise-card-name">${esc(exercise.name)}</div>
             </div>
         `;
@@ -394,7 +573,7 @@
     }
 
     function updateFavoritesBadge() {
-        $('favorites-count-badge').textContent = plural(state.favorites.size, 'exercício', 'exercícios');
+        $('favorites-count-badge').textContent = plural(state.favorites.size, 'exercício salvo', 'exercícios salvos');
     }
 
     function renderFavorites() {
@@ -402,27 +581,43 @@
         grid.innerHTML = '';
         const favs = state.exercises.filter(ex => state.favorites.has(ex.id));
         updateFavoritesBadge();
-        $('favorites-empty-state').style.display = favs.length ? 'none' : 'flex';
+        $('favorites-empty-state').hidden = favs.length > 0;
         favs.forEach(ex => grid.appendChild(createExerciseCard(ex)));
     }
 
     // --- Listas de treinos ---
+    function workoutSummaryHtml(w) {
+        const list = w.exercises || [];
+        const sets = list.reduce((n, e) => n + (parseInt(e.series) || 3), 0);
+        // estimativa: ~40 s por série + o descanso combinado
+        const mins = Math.round(list.reduce((n, e) => n + (parseInt(e.series) || 3) * (40 + (parseInt(e.rest) || 0)), 0) / 60);
+        const thumbs = list.slice(0, 4).map(e => `<div class="media">${thumbImg(gifOf(e))}</div>`).join('');
+        const more = list.length > 4 ? `<span class="more">+${list.length - 4}</span>` : '';
+        return `
+            <div class="thumb-strip">${thumbs}${more}</div>
+            <div class="card-title">${esc(w.title)}</div>
+            ${w.description ? `<p class="card-desc">${esc(w.description)}</p>` : ''}
+            <div class="card-meta">
+                <span class="pill">${plural(list.length, 'exercício', 'exercícios')}</span>
+                <span class="pill">${plural(sets, 'série', 'séries')}</span>
+                <span class="pill">~${mins} min</span>
+            </div>
+        `;
+    }
+
     function renderPresetWorkouts() {
         const container = $('preset-workouts-list');
-        $('preset-count-badge').textContent = plural(state.presets.length, 'rotina', 'rotinas');
+        $('preset-count-badge').textContent = plural(state.presets.length, 'modelo', 'modelos');
         container.innerHTML = '';
 
         state.presets.forEach(preset => {
-            const card = document.createElement('div');
+            const card = document.createElement('article');
             card.className = 'card';
             card.innerHTML = `
-                <span class="eyebrow">${esc(preset.category)}</span>
-                <div class="card-title">${esc(preset.title)}</div>
-                <p class="card-desc">${esc(preset.description)}</p>
-                <div class="card-meta"><span>${plural(preset.exercises.length, 'exercício', 'exercícios')}</span></div>
+                ${workoutSummaryHtml(preset)}
                 <div class="card-actions">
-                    <button class="btn btn-primary grow" data-act="start">Iniciar treino</button>
-                    <button class="btn btn-ghost" data-act="copy">Copiar</button>
+                    <button class="btn btn-primary grow" data-act="start">Iniciar</button>
+                    <button class="btn btn-outline" data-act="copy">Copiar</button>
                 </div>
             `;
             card.querySelector('[data-act="start"]').addEventListener('click', () => startWorkout(preset));
@@ -440,39 +635,35 @@
             exercises: JSON.parse(JSON.stringify(preset.exercises))
         });
         saveCustomWorkouts();
-        $('section-custom-workouts').classList.remove('collapsed');
-        $('main-scroll').scrollTop = 0;
-        Native.toast('Treino copiado para as suas rotinas');
+        $('main-scroll').scrollTo({ top: 0, behavior: 'smooth' });
+        toast('Copiado para os seus treinos');
     }
 
     function renderCustomWorkouts() {
         const container = $('custom-workouts-list');
-        $('custom-count-badge').textContent = plural(state.customWorkouts.length, 'rotina', 'rotinas');
         container.innerHTML = '';
 
         if (state.customWorkouts.length === 0) {
-            container.innerHTML = `<div class="empty-state small"><p>Nenhuma rotina criada ainda. Toque em "Novo treino" ou copie uma predefinida.</p></div>`;
+            container.innerHTML = `<div class="empty-state small"><h3>Nenhum treino seu ainda</h3><p>Crie um em "Novo treino" ou copie um modelo pronto.</p></div>`;
             return;
         }
 
-        state.customWorkouts.forEach((w, index) => {
-            const card = document.createElement('div');
+        state.customWorkouts.forEach((w) => {
+            const card = document.createElement('article');
             card.className = 'card';
             card.innerHTML = `
-                <div class="card-title">${esc(w.title)}</div>
-                ${w.description ? `<p class="card-desc">${esc(w.description)}</p>` : ''}
-                <div class="card-meta"><span>${plural(w.exercises.length, 'exercício', 'exercícios')}</span></div>
+                ${workoutSummaryHtml(w)}
                 <div class="card-actions">
-                    <button class="btn btn-primary grow" data-act="start">Iniciar</button>
-                    <button class="btn btn-accent" data-act="edit">Editar</button>
-                    <button class="btn btn-danger" data-act="delete">Excluir</button>
+                    <button class="btn btn-primary grow" data-act="start">Iniciar treino</button>
+                    <button class="btn btn-quiet" data-act="edit">Editar</button>
+                    <button class="btn btn-quiet danger" data-act="delete">Excluir</button>
                 </div>
             `;
             card.querySelector('[data-act="start"]').addEventListener('click', () => startWorkout(w));
             card.querySelector('[data-act="edit"]').addEventListener('click', () => openWorkoutEditor(w));
-            card.querySelector('[data-act="delete"]').addEventListener('click', () => {
-                if (confirm(`Excluir a rotina "${w.title}"?`)) {
-                    state.customWorkouts.splice(index, 1);
+            card.querySelector('[data-act="delete"]').addEventListener('click', async () => {
+                if (await ask('Excluir este treino?', `"${w.title}" sai da sua lista. O histórico continua.`, 'Excluir', true)) {
+                    state.customWorkouts = state.customWorkouts.filter(x => x !== w);
                     saveCustomWorkouts();
                 }
             });
@@ -488,7 +679,8 @@
             description: '',
             exercises: []
         };
-        $('workout-editor-title').textContent = state.customWorkouts.some(w => w.id === state.editingWorkout.id) ? 'Editar treino' : 'Novo treino';
+        const exists = state.customWorkouts.some(w => w.id === state.editingWorkout.id);
+        $('workout-editor-title').textContent = exists ? 'Editar treino' : 'Novo treino';
         $('editor-workout-name').value = state.editingWorkout.title || '';
         $('editor-workout-desc').value = state.editingWorkout.description || '';
         renderEditorExerciseList();
@@ -499,7 +691,7 @@
         const container = $('editor-exercises-list');
         const list = state.editingWorkout.exercises;
         container.innerHTML = '';
-        $('editor-empty-state').style.display = list.length ? 'none' : 'flex';
+        $('editor-empty-state').hidden = list.length > 0;
 
         list.forEach((item, idx) => {
             if (!item.gif_file) fillFromCatalog(item);
@@ -507,9 +699,9 @@
             el.className = 'card';
             el.innerHTML = `
                 <div class="editor-item-top">
-                    <div class="gif-frame thumb"><img src="${gifUrl(item.gif_file)}" alt="" loading="lazy"></div>
+                    <div class="media thumb">${thumbImg(item.gif_file)}</div>
                     <div class="row-item-info">
-                        <span class="eyebrow">${esc(item.category || 'Geral')}</span>
+                        <span class="eyebrow accent">${esc(item.category || 'Geral')}</span>
                         <div class="row-item-title">${idx + 1}. ${esc(item.name)}</div>
                     </div>
                 </div>
@@ -519,9 +711,9 @@
                     <label>Descanso (s)<input type="number" inputmode="numeric" class="form-input" data-f="rest" value="${esc(item.rest ?? 60)}" min="0" step="5"></label>
                 </div>
                 <div class="card-actions">
-                    <button class="btn btn-sm btn-ghost grow" data-act="up" ${idx === 0 ? 'disabled' : ''}>Subir</button>
-                    <button class="btn btn-sm btn-ghost grow" data-act="down" ${idx === list.length - 1 ? 'disabled' : ''}>Descer</button>
-                    <button class="btn btn-sm btn-danger grow" data-act="remove">Remover</button>
+                    <button class="btn btn-sm btn-outline grow" data-act="up" ${idx === 0 ? 'disabled' : ''}>Subir</button>
+                    <button class="btn btn-sm btn-outline grow" data-act="down" ${idx === list.length - 1 ? 'disabled' : ''}>Descer</button>
+                    <button class="btn btn-sm btn-quiet danger" data-act="remove">Remover</button>
                 </div>
             `;
 
@@ -550,12 +742,12 @@
         const nameInput = $('editor-workout-name');
         const title = nameInput.value.trim();
         if (!title) {
-            Native.toast('Informe o nome do treino.');
+            toast('Dê um nome ao treino.');
             nameInput.focus();
             return;
         }
         if (state.editingWorkout.exercises.length === 0) {
-            Native.toast('Adicione pelo menos 1 exercício.');
+            toast('Adicione pelo menos 1 exercício.');
             return;
         }
         state.editingWorkout.title = title;
@@ -566,9 +758,8 @@
         else state.customWorkouts.push(state.editingWorkout);
 
         saveCustomWorkouts();
-        $('section-custom-workouts').classList.remove('collapsed');
         closeModal('modal-workout-editor');
-        Native.toast('Treino salvo');
+        toast('Treino salvo');
     }
 
     // --- Seletor de exercício (dentro do editor) ---
@@ -601,17 +792,18 @@
         });
 
         $('picker-count-badge').textContent = filtered.length;
-        $('picker-empty-state').style.display = filtered.length ? 'none' : 'flex';
+        $('picker-empty-state').hidden = filtered.length > 0;
 
-        // shortcut: mostra só os 60 primeiros (GIFs pesam); refine pela busca. Paginar se incomodar.
-        filtered.slice(0, 60).forEach(ex => {
+        // shortcut: mostra os 80 primeiros; refine pela busca ou categoria. Paginar se incomodar.
+        const fragment = document.createDocumentFragment();
+        filtered.slice(0, 80).forEach(ex => {
             const card = document.createElement('button');
             card.type = 'button';
             card.className = 'card row-item';
             card.innerHTML = `
-                <div class="gif-frame thumb"><img src="${gifUrl(ex.gif_file || ex.name + '.gif')}" alt="" loading="lazy"></div>
-                <div class="row-item-info" style="text-align:left">
-                    <span class="eyebrow">${esc(ex.category)}</span>
+                <div class="media thumb">${thumbImg(gifOf(ex))}</div>
+                <div class="row-item-info">
+                    <span class="eyebrow accent">${esc(ex.category)}</span>
                     <div class="row-item-title">${esc(ex.name)}</div>
                     <span class="muted-small">${esc((ex.equipments || []).join(', ') || 'Peso corporal')}</span>
                 </div>
@@ -620,9 +812,11 @@
                 state.editingWorkout.exercises.push(newExerciseItem(ex));
                 renderEditorExerciseList();
                 closeModal('modal-exercise-picker');
+                toast('Exercício adicionado');
             });
-            container.appendChild(card);
+            fragment.appendChild(card);
         });
+        container.appendChild(fragment);
     }
 
     // --- Detalhe do exercício ---
@@ -632,8 +826,11 @@
         $('detail-tags').textContent = exercise.category;
         $('detail-equipment').innerHTML = (exercise.equipments || []).map(eq => `<span class="pill">${esc(eq)}</span>`).join('');
         const img = $('detail-gif-img');
-        img.src = gifUrl(exercise.gif_file);
+        img.src = thumbUrl(gifOf(exercise)); // aparece na hora; o GIF entra por cima quando carregar
         img.alt = exercise.name;
+        const gif = new Image();
+        gif.onload = () => { if (img.alt === exercise.name) img.src = gif.src; };
+        gif.src = gifUrl(gifOf(exercise));
         $('btn-add-to-workout-modal').onclick = () => {
             closeModal('modal-exercise-detail');
             promptAddExerciseToWorkout(exercise);
@@ -641,52 +838,25 @@
         openModal('modal-exercise-detail');
     }
 
-    function promptAddExerciseToWorkout(exercise) {
-        const container = $('choose-workout-list');
-        container.innerHTML = '';
-
-        const addRow = (label, sub, onClick) => {
-            const btn = document.createElement('button');
-            btn.type = 'button';
-            btn.className = 'card';
-            btn.style.textAlign = 'left';
-            btn.innerHTML = `<div class="card-title">${esc(label)}</div><span class="muted-small">${esc(sub)}</span>`;
-            btn.addEventListener('click', () => {
-                closeModal('modal-choose-workout');
-                onClick();
-            });
-            container.appendChild(btn);
-        };
-
-        state.customWorkouts.forEach(w => addRow(w.title, plural(w.exercises.length, 'exercício', 'exercícios'), () => {
-            w.exercises.push(newExerciseItem(exercise));
-            saveCustomWorkouts();
-            Native.toast(`Adicionado a "${w.title}"`);
-        }));
-        addRow('Criar novo treino', 'Começa já com este exercício', () => openWorkoutEditor({
-            id: 'custom_' + Date.now(),
-            title: '',
-            description: '',
-            exercises: [newExerciseItem(exercise)]
-        }));
-        openModal('modal-choose-workout');
-    }
-
-    // --- Janelas ---
-    function openModal(modalId) {
-        $(modalId).classList.add('active');
-        state.currentModal = modalId;
-    }
-
-    function closeModal(modalId) {
-        $(modalId).classList.remove('active');
-        const open = document.querySelectorAll('.modal-overlay.active');
-        state.currentModal = open.length ? open[open.length - 1].id : null;
+    async function promptAddExerciseToWorkout(exercise) {
+        const NEW = '__novo__';
+        const options = state.customWorkouts.map(w => ({ value: w.id, label: w.title, hint: plural(w.exercises.length, 'exercício', 'exercícios') }));
+        options.push({ value: NEW, label: 'Criar novo treino', hint: 'começa com este exercício' });
+        const picked = await pickOption('Adicionar a qual treino?', options);
+        if (picked === undefined) return;
+        if (picked === NEW) {
+            openWorkoutEditor({ id: 'custom_' + Date.now(), title: '', description: '', exercises: [newExerciseItem(exercise)] });
+            return;
+        }
+        const w = state.customWorkouts.find(x => x.id === picked);
+        w.exercises.push(newExerciseItem(exercise));
+        saveCustomWorkouts();
+        toast(`Adicionado a "${w.title}"`);
     }
 
     function setupModals() {
         $('btn-close-exercise-detail').addEventListener('click', () => closeModal('modal-exercise-detail'));
-        $('btn-close-choose-workout').addEventListener('click', () => closeModal('modal-choose-workout'));
+        $('btn-close-options').addEventListener('click', () => settleOptions(undefined));
         $('btn-cancel-workout-edit').addEventListener('click', () => closeModal('modal-workout-editor'));
         $('btn-open-exercise-picker').addEventListener('click', openExercisePicker);
         $('btn-close-exercise-picker').addEventListener('click', () => closeModal('modal-exercise-picker'));
@@ -696,12 +866,19 @@
         });
         $('btn-save-workout').addEventListener('click', saveEditingWorkout);
         $('btn-close-summary').addEventListener('click', () => closeModal('modal-workout-summary'));
-        $('btn-clear-history').addEventListener('click', () => {
-            if (confirm('Apagar todo o histórico de treinos?')) {
+        $('confirm-ok').addEventListener('click', () => settleConfirm(true));
+        $('confirm-cancel').addEventListener('click', () => settleConfirm(false));
+        $('btn-clear-history').addEventListener('click', async () => {
+            if (await ask('Apagar todo o histórico?', 'Os registros de treinos concluídos somem. Seus treinos ficam.', 'Apagar', true)) {
                 state.history = [];
                 saveHistory();
             }
         });
+        // Tocar fora fecha as folhas (não as telas cheias nem a confirmação)
+        ['modal-exercise-detail', 'modal-options'].forEach(id => $(id).addEventListener('click', (e) => {
+            if (e.target.id !== id) return;
+            if (id === 'modal-options') settleOptions(undefined); else closeModal(id);
+        }));
     }
 
     // ======================================================================
@@ -709,12 +886,12 @@
     // Uma linha por exercício: "+" conta a série feita e dispara o descanso.
     // Tudo é salvo a cada toque: se o Android matar o app, o treino volta igual.
     // ======================================================================
-    function startWorkout(workout) {
+    async function startWorkout(workout) {
         if (!workout.exercises || workout.exercises.length === 0) {
-            Native.toast('Este treino não tem exercícios.');
+            toast('Este treino não tem exercícios.');
             return;
         }
-        if (state.activeWorkout && !confirm('Já existe um treino em andamento. Começar outro?')) return;
+        if (state.activeWorkout && !(await ask('Já existe um treino em andamento', 'Começar outro descarta o atual.', 'Começar outro'))) return;
 
         state.activeWorkout = JSON.parse(JSON.stringify(workout));
         state.activeExerciseIndex = 0;
@@ -747,6 +924,7 @@
             state.activeExerciseIndex = Math.min(saved.index || 0, saved.workout.exercises.length - 1);
             state.activeWorkoutStartTime = saved.startTime;
             state.restEndsAt = saved.restEndsAt > Date.now() ? saved.restEndsAt : 0;
+            state.restTotalMs = saved.restTotalMs || 0;
             showPlayer();
         } catch (e) {
             console.error('Erro ao restaurar treino', e);
@@ -759,7 +937,8 @@
             workout: state.activeWorkout,
             index: state.activeExerciseIndex,
             startTime: state.activeWorkoutStartTime,
-            restEndsAt: state.restEndsAt
+            restEndsAt: state.restEndsAt,
+            restTotalMs: state.restTotalMs
         });
     }
 
@@ -779,8 +958,8 @@
         $('player-timer-elapsed').textContent = clock(Math.floor((Date.now() - state.activeWorkoutStartTime) / 1000));
 
         const resting = state.restEndsAt > 0;
-        const left = Math.ceil((state.restEndsAt - Date.now()) / 1000);
-        if (resting && left <= 0) {
+        const leftMs = state.restEndsAt - Date.now();
+        if (resting && leftMs <= 0) {
             state.restEndsAt = 0;
             persistActive();
             if (!Native.has) { // no aparelho o serviço nativo já vibrou e tocou
@@ -791,11 +970,16 @@
         const showTimer = state.restEndsAt > 0;
         $('player-rest-timer-box').hidden = !showTimer;
         $('player-rest-hint').hidden = showTimer;
-        if (showTimer) $('rest-timer-seconds').textContent = clock(left);
+        if (showTimer) {
+            $('rest-timer-seconds').textContent = clock(Math.ceil(leftMs / 1000));
+            $('rest-bar-fill').style.transform = `scaleX(${Math.max(0, Math.min(1, leftMs / (state.restTotalMs || leftMs)))})`;
+        }
     }
 
     function setRest(endsAt) {
         state.restEndsAt = endsAt > Date.now() ? endsAt : 0;
+        state.restTotalMs = Math.max(state.restTotalMs, state.restEndsAt - Date.now());
+        if (!state.restEndsAt) state.restTotalMs = 0;
         Native.workoutRest(state.restEndsAt);
         persistActive();
         tick();
@@ -822,6 +1006,9 @@
         const src = gifUrl(current.gif_file);
         if (img.dataset.src !== src) { // não reinicia o GIF a cada toque no contador
             img.dataset.src = src;
+            img.classList.remove('loaded');
+            $('player-poster').src = thumbUrl(current.gif_file); // quadro parado na hora; o GIF entra quando carregar
+            img.onload = () => img.classList.add('loaded');
             img.src = src;
             img.alt = current.name;
         }
@@ -831,7 +1018,7 @@
         $('player-sets-total').textContent = current.series;
         $('btn-set-minus').disabled = current.done === 0;
         $('btn-set-plus').disabled = doneAll;
-        document.querySelector('.set-counter').classList.toggle('complete', doneAll);
+        $('set-counter').classList.toggle('complete', doneAll);
 
         $('player-rest-hint').textContent = doneAll
             ? (isLast ? 'Último exercício concluído.' : 'Exercício concluído. Toque em Próximo.')
@@ -841,7 +1028,7 @@
         const nextBtn = $('btn-player-next');
         nextBtn.textContent = isLast ? 'Concluir' : 'Próximo';
         nextBtn.classList.toggle('btn-primary', doneAll);
-        nextBtn.classList.toggle('btn-accent', !doneAll);
+        nextBtn.classList.toggle('btn-outline', !doneAll);
         tick();
     }
 
@@ -856,8 +1043,14 @@
         const lastSetOfWorkout = state.activeExerciseIndex === list.length - 1 && next === current.series;
         const rest = parseInt(current.rest) || 0;
         // "+" inicia o descanso; "−" (toque errado) cancela
+        state.restTotalMs = 0;
         setRest(delta > 0 && rest > 0 && !lastSetOfWorkout ? Date.now() + rest * 1000 : 0);
         renderActiveExercise();
+
+        const value = document.querySelector('.set-counter-value');
+        value.classList.remove('bump');
+        void value.offsetWidth; // reinicia a animação
+        value.classList.add('bump');
     }
 
     function goToExercise(delta) {
@@ -872,8 +1065,8 @@
         renderActiveExercise();
     }
 
-    function confirmCancelWorkout() {
-        if (confirm('Sair do treino? O progresso desta sessão não será salvo no histórico.')) closePlayer();
+    async function confirmCancelWorkout() {
+        if (await ask('Sair do treino?', 'O progresso desta sessão não vai para o histórico.', 'Sair', true)) closePlayer();
     }
 
     function setupPlayer() {
@@ -881,8 +1074,8 @@
         $('btn-set-minus').addEventListener('click', () => changeSets(-1));
         $('btn-player-prev').addEventListener('click', () => goToExercise(-1));
         $('btn-player-next').addEventListener('click', () => goToExercise(1));
-        $('btn-player-finish').addEventListener('click', () => {
-            if (confirm('Finalizar o treino agora?')) finishWorkoutSession();
+        $('btn-player-finish').addEventListener('click', async () => {
+            if (await ask('Finalizar o treino agora?', 'Ele entra no histórico com as séries feitas até aqui.', 'Finalizar')) finishWorkoutSession();
         });
         $('btn-minimize-player').addEventListener('click', confirmCancelWorkout);
         $('btn-timer-add30').addEventListener('click', () => setRest(state.restEndsAt + 30000));
@@ -899,6 +1092,7 @@
         Storage.remove(ACTIVE_KEY);
         state.activeWorkout = null;
         state.restEndsAt = 0;
+        state.restTotalMs = 0;
     }
 
     function finishWorkoutSession() {
@@ -928,29 +1122,28 @@
     function renderHistory() {
         const list = $('history-list');
         list.innerHTML = '';
-        $('history-empty-state').style.display = state.history.length ? 'none' : 'flex';
+        $('history-empty-state').hidden = state.history.length > 0;
+        $('btn-clear-history').hidden = state.history.length === 0;
 
         let totalSets = 0;
         let totalMinutes = 0;
+        const fragment = document.createDocumentFragment();
         state.history.forEach(item => {
             totalSets += item.completedSets || 0;
             totalMinutes += item.durationMins || 0;
-            const dateStr = new Date(item.date).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+            const d = new Date(item.date);
             const row = document.createElement('div');
-            row.className = 'card';
+            row.className = 'card history-item';
             row.innerHTML = `
-                <div class="card-head">
+                <div class="date-block"><strong>${d.getDate()}</strong><span>${esc(d.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', ''))}</span></div>
+                <div class="grow">
                     <div class="card-title">${esc(item.workoutTitle)}</div>
-                    <span class="muted-small">${esc(dateStr)}</span>
-                </div>
-                <div class="card-meta">
-                    <span>${item.durationMins} min</span>
-                    <span>${plural(item.completedSets || 0, 'série', 'séries')}</span>
-                    <span>${plural(item.exercisesCount || 0, 'exercício', 'exercícios')}</span>
+                    <span class="muted-small">${item.durationMins || 0} min · ${plural(item.completedSets || 0, 'série', 'séries')} · ${plural(item.exercisesCount || 0, 'exercício', 'exercícios')}</span>
                 </div>
             `;
-            list.appendChild(row);
+            fragment.appendChild(row);
         });
+        list.appendChild(fragment);
 
         $('stat-total-workouts').textContent = state.history.length;
         $('stat-total-sets').textContent = totalSets;
@@ -967,17 +1160,24 @@
                 Storage.set('treinofit_settings', state.settings);
             });
         });
-    }
 
-    function checkOfflineStatus() {
-        const info = Native.json('getStorageInfo');
-        if (!info) {
-            $('settings-storage-desc').textContent = 'Disponível só no aparelho.';
-            return;
-        }
-        $('settings-storage-path').textContent = info.gifsPath;
-        $('settings-storage-desc').textContent = `${info.localGifsCount} GIFs na pasta local; os demais vêm embutidos no app.`;
-        $('settings-gif-badge').textContent = 'Offline';
+        $('btn-export-backup').addEventListener('click', () => {
+            const where = call('exportBackup', backupPayload());
+            toast(where ? `Backup salvo em ${where}` : (where === null ? 'Backup disponível só no aparelho.' : 'Não foi possível salvar o backup.'));
+        });
+        $('btn-import-backup').addEventListener('click', () => {
+            if (call('pickBackup') === null) toast('Importação disponível só no aparelho.');
+        });
+        $('btn-restore-defaults').addEventListener('click', async () => {
+            if (!(await ask('Restaurar treinos originais?', 'Os treinos que vieram com o app voltam para a sua lista. Nada seu é apagado.', 'Restaurar'))) return;
+            try {
+                const added = await addDefaultWorkouts();
+                if (added) saveCustomWorkouts();
+                toast(added ? `${plural(added, 'treino restaurado', 'treinos restaurados')}` : 'Todos os treinos originais já estão na lista.');
+            } catch (e) {
+                toast('Não foi possível restaurar.');
+            }
+        });
     }
 
     window.addEventListener('DOMContentLoaded', init);

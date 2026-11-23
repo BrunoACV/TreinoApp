@@ -1,10 +1,11 @@
 <!DOCTYPE html>
-<html lang="pt-BR" data-theme="dark">
+<html lang="pt-BR" data-theme="dark" data-palette="brand">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>TreinoFit</title>
     <script>
+        // Tema certo antes da primeira pintura (sem piscar)
         (function () {
             var s = 'system';
             try { s = (window.Android && Android.loadData('treinofit_theme_scheme')) || localStorage.getItem('treinofit_theme_scheme') || s; } catch (e) {}
@@ -12,198 +13,156 @@
             document.documentElement.dataset.theme = dark ? 'dark' : 'light';
         })();
     </script>
-    <link rel="stylesheet" href="app.css">
+    <link rel="stylesheet" href="app.css?v=__V__">
 </head>
 <body>
-    <header class="app-header">
-        <span class="logo">Treino<strong>Fit</strong></span>
-        <span class="pill">Offline</span>
-    </header>
+    <main class="main" id="main-scroll">
 
-    <main class="main-container" id="main-scroll">
-
-        <!-- TREINOS -->
+        <!-- INÍCIO / TREINOS -->
         <section id="view-workouts" class="view active">
-            <div class="hero-card">
-                <div>
-                    <h2>Pronto para treinar?</h2>
-                    <p>Escolha uma rotina ou monte a sua.</p>
-                </div>
-                <button id="btn-create-workout-hero" class="btn btn-primary">Novo treino</button>
+            <header class="view-head">
+                <span class="wordmark">Treino<strong>Fit</strong></span>
+                <span class="eyebrow" id="home-date"></span>
+            </header>
+            <h1 class="display"><span id="home-greeting">Olá</span><br><em>Bora treinar?</em></h1>
+
+            <div class="stats-row">
+                <div class="stat-card"><span class="stat-value" id="home-stat-week">0</span><span class="stat-label">esta semana</span></div>
+                <div class="stat-card"><span class="stat-value" id="home-stat-last">—</span><span class="stat-label">último treino</span></div>
+                <div class="stat-card"><span class="stat-value" id="home-stat-total">0</span><span class="stat-label">no total</span></div>
             </div>
 
-            <div class="section-block" id="section-custom-workouts">
-                <button class="section-toggle" id="toggle-custom-workouts">
-                    <h3>Meus treinos</h3>
-                    <span id="custom-count-badge" class="pill">0 rotinas</span>
-                </button>
-                <div id="custom-workouts-list" class="card-list section-collapse-content"></div>
+            <div class="section-head">
+                <h2>Meus treinos</h2>
+                <button id="btn-create-workout-hero" class="btn btn-sm btn-tint">Novo treino</button>
             </div>
+            <div id="custom-workouts-list" class="card-list stagger"></div>
 
-            <div class="section-block collapsed" id="section-preset-workouts">
-                <button class="section-toggle" id="toggle-preset-workouts">
-                    <h3>Treinos predefinidos</h3>
-                    <span id="preset-count-badge" class="pill">0 rotinas</span>
-                </button>
-                <div id="preset-workouts-list" class="card-list section-collapse-content"></div>
+            <div class="section-head">
+                <h2>Modelos prontos</h2>
+                <span class="muted-small" id="preset-count-badge"></span>
             </div>
+            <div id="preset-workouts-list" class="carousel"></div>
         </section>
 
         <!-- EXERCÍCIOS -->
         <section id="view-exercises" class="view">
-            <div class="sticky-search-box">
-                <div class="search-input-wrapper">
-                    <input type="text" id="exercise-search-input" class="form-input" placeholder="Buscar exercício..." autocomplete="off">
-                    <button id="clear-search-btn" class="clear-btn" style="display: none;">Limpar</button>
+            <h1 class="display">Exercícios</h1>
+            <div class="sticky-filters">
+                <div class="search-wrap">
+                    <input type="text" id="exercise-search-input" class="form-input" placeholder="Buscar exercício" autocomplete="off">
+                    <button id="clear-search-btn" class="clear-btn" hidden>Limpar</button>
                 </div>
                 <div class="chips-scroll" id="category-chips"></div>
-                <div class="equipment-filter-row">
-                    <select id="equipment-select" class="form-input">
-                        <option value="">Todos os equipamentos</option>
-                        <option value="Barra">Barra</option>
-                        <option value="Halteres">Halteres</option>
-                        <option value="Cabo / Polia">Cabo / Polia</option>
-                        <option value="Máquina">Máquina</option>
-                        <option value="Peso Corporal">Peso corporal</option>
-                        <option value="Elástico / Faixa">Elástico / Faixa</option>
-                        <option value="Smith">Smith</option>
-                        <option value="Kettlebell">Kettlebell</option>
-                        <option value="Rolo de Espuma">Rolo de espuma</option>
-                    </select>
+                <div class="filter-row">
+                    <button id="btn-equipment" class="btn btn-sm btn-outline">Equipamento: todos</button>
                     <span class="muted-small"><span id="filter-result-count">0</span> exercícios</span>
                 </div>
             </div>
             <div id="exercises-grid" class="exercises-grid"></div>
-            <div id="infinite-scroll-sentinel" class="muted-small sentinel">Carregando...</div>
+            <div id="infinite-scroll-sentinel" class="muted-small sentinel">Carregando mais...</div>
         </section>
 
         <!-- FAVORITOS -->
         <section id="view-favorites" class="view">
-            <div class="section-header">
-                <h3>Favoritos</h3>
-                <span id="favorites-count-badge" class="pill">0</span>
-            </div>
+            <h1 class="display">Favoritos</h1>
+            <span class="muted-small" id="favorites-count-badge"></span>
             <div id="favorites-grid" class="exercises-grid"></div>
-            <div id="favorites-empty-state" class="empty-state" style="display: none;">
-                <h4>Nenhum favorito ainda</h4>
+            <div id="favorites-empty-state" class="empty-state" hidden>
+                <h3>Nada salvo ainda</h3>
                 <p>Toque em "Salvar" em qualquer exercício para guardá-lo aqui.</p>
             </div>
         </section>
 
         <!-- HISTÓRICO -->
         <section id="view-history" class="view">
-            <div class="section-header">
-                <h3>Histórico</h3>
-                <button id="btn-clear-history" class="btn btn-sm btn-ghost">Limpar</button>
-            </div>
+            <h1 class="display">Histórico</h1>
             <div class="stats-row">
-                <div class="stat-card">
-                    <span class="stat-value" id="stat-total-workouts">0</span>
-                    <span class="stat-label">Treinos</span>
-                </div>
-                <div class="stat-card">
-                    <span class="stat-value" id="stat-total-sets">0</span>
-                    <span class="stat-label">Séries</span>
-                </div>
-                <div class="stat-card">
-                    <span class="stat-value" id="stat-total-minutes">0h</span>
-                    <span class="stat-label">Tempo</span>
-                </div>
+                <div class="stat-card"><span class="stat-value" id="stat-total-workouts">0</span><span class="stat-label">treinos</span></div>
+                <div class="stat-card"><span class="stat-value" id="stat-total-sets">0</span><span class="stat-label">séries</span></div>
+                <div class="stat-card"><span class="stat-value" id="stat-total-minutes">0h</span><span class="stat-label">em treino</span></div>
             </div>
-            <div id="history-list" class="card-list"></div>
+            <div id="history-list" class="card-list stagger"></div>
             <div id="history-empty-state" class="empty-state">
-                <h4>Nenhum treino registrado</h4>
-                <p>Inicie um treino para acompanhar sua evolução.</p>
+                <h3>Nenhum treino registrado</h3>
+                <p>Finalize um treino e ele aparece aqui.</p>
             </div>
+            <button id="btn-clear-history" class="btn btn-quiet danger" hidden>Limpar histórico</button>
         </section>
 
         <!-- AJUSTES -->
         <section id="view-settings" class="view">
-            <div class="section-header"><h3>Aparência</h3></div>
+            <h1 class="display">Ajustes</h1>
+
+            <div class="section-head"><h2>Aparência</h2></div>
             <div class="settings-card">
-                <div class="settings-row">
-                    <div>
-                        <strong>Tema</strong>
-                        <p>Escuro usa preto puro e poupa bateria em telas OLED.</p>
-                    </div>
-                </div>
+                <div class="settings-row"><div><strong>Tema</strong><p>O escuro usa preto puro e poupa bateria em tela OLED.</p></div></div>
                 <div class="segmented" id="setting-theme-scheme">
                     <button data-value="system">Sistema</button>
                     <button data-value="dark">Escuro</button>
                     <button data-value="light">Claro</button>
                 </div>
-                <div class="settings-row">
-                    <div>
-                        <strong>Cor de destaque</strong>
-                        <p id="setting-theme-desc"></p>
-                    </div>
-                </div>
+                <div class="settings-row"><div><strong>Cor de destaque</strong><p id="setting-theme-desc"></p></div></div>
                 <div class="segmented" id="setting-theme-palette">
-                    <button data-value="bw">Preto e branco</button>
-                    <button data-value="dynamic">Cores do Android</button>
+                    <button data-value="brand">TreinoFit</button>
+                    <button data-value="dynamic">Android</button>
+                    <button data-value="bw">Mono</button>
                 </div>
             </div>
 
-            <div class="section-header"><h3>Durante o treino</h3></div>
+            <div class="section-head"><h2>Durante o treino</h2></div>
             <div class="settings-card">
                 <label class="settings-row">
-                    <div>
-                        <strong>Manter a tela ligada</strong>
-                        <p>Evita que o celular bloqueie durante o treino.</p>
-                    </div>
+                    <div><strong>Manter a tela ligada</strong><p>O celular não bloqueia no meio do treino.</p></div>
                     <span class="switch"><input type="checkbox" id="toggle-keep-screen" checked><span class="slider"></span></span>
                 </label>
                 <label class="settings-row">
-                    <div>
-                        <strong>Vibrar no fim do descanso</strong>
-                        <p>Funciona mesmo com outro app na frente.</p>
-                    </div>
+                    <div><strong>Vibrar no fim do descanso</strong><p>Avisa mesmo com outro app na frente.</p></div>
                     <span class="switch"><input type="checkbox" id="toggle-vibration" checked><span class="slider"></span></span>
                 </label>
                 <label class="settings-row">
-                    <div>
-                        <strong>Som no fim do descanso</strong>
-                        <p>Sinal curto ao zerar o tempo.</p>
-                    </div>
+                    <div><strong>Som no fim do descanso</strong><p>Sinal curto ao zerar o tempo.</p></div>
                     <span class="switch"><input type="checkbox" id="toggle-sound" checked><span class="slider"></span></span>
                 </label>
             </div>
 
-            <div class="section-header"><h3>Armazenamento</h3></div>
+            <div class="section-head"><h2>Seus dados</h2></div>
             <div class="settings-card">
-                <div class="settings-row">
-                    <div>
-                        <strong>Banco de GIFs</strong>
-                        <p id="settings-storage-desc">Verificando...</p>
-                    </div>
-                    <span id="settings-gif-badge" class="pill">...</span>
+                <div class="settings-row"><div><strong>Cópia de segurança</strong><p id="settings-backup-desc">Treinos, histórico e favoritos são copiados sozinhos para Downloads/TreinoFit a cada mudança.</p></div></div>
+                <div class="btn-row">
+                    <button id="btn-export-backup" class="btn btn-sm btn-outline grow">Exportar agora</button>
+                    <button id="btn-import-backup" class="btn btn-sm btn-outline grow">Importar</button>
                 </div>
-                <code id="settings-storage-path"></code>
+                <button id="btn-restore-defaults" class="btn btn-sm btn-quiet">Restaurar treinos originais</button>
             </div>
         </section>
     </main>
 
     <nav class="bottom-nav">
-        <button class="nav-item active" data-view="view-workouts">Treinos</button>
-        <button class="nav-item" data-view="view-exercises">Exercícios</button>
-        <button class="nav-item" data-view="view-favorites">Favoritos</button>
-        <button class="nav-item" data-view="view-history">Histórico</button>
-        <button class="nav-item" data-view="view-settings">Ajustes</button>
+        <div class="nav-pill" id="nav-pill">
+            <span class="nav-indicator"></span>
+            <button class="nav-item active" data-view="view-workouts">Treinos</button>
+            <button class="nav-item" data-view="view-exercises">Exercícios</button>
+            <button class="nav-item" data-view="view-favorites">Favoritos</button>
+            <button class="nav-item" data-view="view-history">Histórico</button>
+            <button class="nav-item" data-view="view-settings">Ajustes</button>
+        </div>
     </nav>
 
     <!-- DETALHE DO EXERCÍCIO -->
     <div id="modal-exercise-detail" class="modal-overlay">
         <div class="modal-sheet">
-            <div class="modal-header-bar">
-                <span id="detail-tags" class="eyebrow"></span>
-                <button class="btn btn-sm btn-ghost" id="btn-close-exercise-detail">Fechar</button>
-            </div>
+            <div class="sheet-grabber"></div>
             <div class="modal-scroll-body">
-                <div class="gif-frame detail-gif"><img id="detail-gif-img" src="" alt=""></div>
+                <div class="media detail-media"><img id="detail-gif-img" src="" alt=""></div>
+                <span id="detail-tags" class="eyebrow accent"></span>
                 <h2 id="detail-title" class="detail-title"></h2>
                 <div class="tag-row" id="detail-equipment"></div>
                 <p id="detail-description" class="detail-desc"></p>
-                <button id="btn-add-to-workout-modal" class="btn btn-primary btn-block">Adicionar a um treino</button>
+            </div>
+            <div class="sheet-actions">
+                <button class="btn btn-outline" id="btn-close-exercise-detail">Fechar</button>
+                <button id="btn-add-to-workout-modal" class="btn btn-primary grow">Adicionar a um treino</button>
             </div>
         </div>
     </div>
@@ -212,7 +171,7 @@
     <div id="modal-workout-editor" class="modal-overlay">
         <div class="modal-sheet full-height">
             <div class="modal-header-bar">
-                <button class="btn btn-sm btn-ghost" id="btn-cancel-workout-edit">Cancelar</button>
+                <button class="btn btn-sm btn-quiet" id="btn-cancel-workout-edit">Cancelar</button>
                 <h3 id="workout-editor-title">Novo treino</h3>
                 <button class="btn btn-sm btn-primary" id="btn-save-workout">Salvar</button>
             </div>
@@ -225,13 +184,13 @@
                     <label for="editor-workout-desc">Descrição (opcional)</label>
                     <input type="text" id="editor-workout-desc" placeholder="Ex.: foco em execução controlada" class="form-input">
                 </div>
-                <div class="section-header">
-                    <h4>Exercícios</h4>
-                    <button id="btn-open-exercise-picker" class="btn btn-sm btn-accent">Adicionar exercício</button>
+                <div class="section-head">
+                    <h2>Exercícios</h2>
+                    <button id="btn-open-exercise-picker" class="btn btn-sm btn-tint">Adicionar</button>
                 </div>
                 <div id="editor-exercises-list" class="card-list"></div>
                 <div id="editor-empty-state" class="empty-state small">
-                    <p>Nenhum exercício adicionado ainda.</p>
+                    <p>Nenhum exercício ainda. Toque em "Adicionar".</p>
                 </div>
             </div>
         </div>
@@ -241,32 +200,33 @@
     <div id="modal-exercise-picker" class="modal-overlay">
         <div class="modal-sheet full-height">
             <div class="modal-header-bar">
-                <button class="btn btn-sm btn-ghost" id="btn-close-exercise-picker">Voltar</button>
-                <h3>Selecionar exercício</h3>
+                <button class="btn btn-sm btn-quiet" id="btn-close-exercise-picker">Voltar</button>
+                <h3>Escolher exercício</h3>
                 <span id="picker-count-badge" class="pill">0</span>
             </div>
             <div class="picker-filters">
-                <input type="text" id="picker-search-input" placeholder="Buscar por nome, categoria ou equipamento..." class="form-input">
+                <input type="text" id="picker-search-input" placeholder="Nome, categoria ou equipamento" class="form-input">
                 <div id="picker-category-chips" class="chips-scroll"></div>
             </div>
             <div class="modal-scroll-body">
                 <div id="picker-exercises-list" class="card-list"></div>
-                <div id="picker-empty-state" class="empty-state small" style="display: none;">
+                <div id="picker-empty-state" class="empty-state small" hidden>
                     <p>Nenhum exercício encontrado.</p>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- ESCOLHER ROTINA (adicionar exercício a um treino) -->
-    <div id="modal-choose-workout" class="modal-overlay">
+    <!-- LISTA DE OPÇÕES (equipamento, escolher treino) -->
+    <div id="modal-options" class="modal-overlay">
         <div class="modal-sheet">
-            <div class="modal-header-bar">
-                <h3>Adicionar a qual treino?</h3>
-                <button class="btn btn-sm btn-ghost" id="btn-close-choose-workout">Fechar</button>
+            <div class="sheet-grabber"></div>
+            <div class="modal-header-bar plain">
+                <h3 id="options-title"></h3>
+                <button class="btn btn-sm btn-quiet" id="btn-close-options">Fechar</button>
             </div>
             <div class="modal-scroll-body">
-                <div id="choose-workout-list" class="card-list"></div>
+                <div id="options-list" class="option-list"></div>
             </div>
         </div>
     </div>
@@ -274,18 +234,19 @@
     <!-- TREINO EM ANDAMENTO: cabe na tela, sem rolagem -->
     <div id="modal-workout-player" class="player-overlay">
         <div class="player-header">
-            <button id="btn-minimize-player" class="btn btn-sm btn-ghost">Sair</button>
+            <button id="btn-minimize-player" class="btn btn-sm btn-quiet">Sair</button>
             <div class="player-header-title">
                 <h4 id="player-workout-name"></h4>
-                <div class="player-progress-bar"><div id="player-progress-fill" class="progress-fill"></div></div>
+                <div class="progress-track"><div id="player-progress-fill" class="progress-fill"></div></div>
             </div>
             <div id="player-timer-elapsed" class="player-elapsed">00:00</div>
         </div>
 
         <div class="player-body">
-            <div class="gif-frame player-gif">
+            <div class="media player-media">
+                <img id="player-poster" class="poster" src="" alt="">
                 <img id="player-current-gif" src="" alt="">
-                <span class="pill player-step" id="player-step-counter"></span>
+                <span class="pill-solid player-step" id="player-step-counter"></span>
             </div>
 
             <div class="player-info">
@@ -293,7 +254,7 @@
                 <p id="player-current-notes"></p>
             </div>
 
-            <div class="set-counter">
+            <div class="set-counter" id="set-counter">
                 <div class="set-counter-label">
                     <span class="eyebrow">Séries feitas</span>
                     <strong id="player-reps-target"></strong>
@@ -306,36 +267,51 @@
             <div class="rest-slot">
                 <p id="player-rest-hint" class="muted-small"></p>
                 <div id="player-rest-timer-box" class="rest-timer" hidden>
+                    <div class="rest-bar"><div id="rest-bar-fill" class="rest-bar-fill"></div></div>
                     <span class="eyebrow">Descanso</span>
                     <span id="rest-timer-seconds" class="timer-display">00:00</span>
-                    <button id="btn-timer-sub10" class="btn btn-sm btn-ghost">−10s</button>
-                    <button id="btn-timer-add30" class="btn btn-sm btn-ghost">+30s</button>
-                    <button id="btn-timer-skip" class="btn btn-sm btn-accent">Pular</button>
+                    <button id="btn-timer-sub10" class="btn btn-sm btn-quiet">−10s</button>
+                    <button id="btn-timer-add30" class="btn btn-sm btn-quiet">+30s</button>
+                    <button id="btn-timer-skip" class="btn btn-sm btn-outline">Pular</button>
                 </div>
             </div>
         </div>
 
         <div class="player-footer">
-            <button id="btn-player-prev" class="btn btn-ghost">Anterior</button>
-            <button id="btn-player-finish" class="btn btn-ghost">Finalizar</button>
-            <button id="btn-player-next" class="btn btn-accent">Próximo</button>
+            <button id="btn-player-prev" class="btn btn-outline">Anterior</button>
+            <button id="btn-player-finish" class="btn btn-quiet">Finalizar</button>
+            <button id="btn-player-next" class="btn btn-outline">Próximo</button>
         </div>
     </div>
 
     <!-- RESUMO -->
     <div id="modal-workout-summary" class="modal-overlay centered">
         <div class="modal-card">
-            <span class="eyebrow">Treino concluído</span>
-            <h2>Bom trabalho.</h2>
+            <span class="eyebrow accent">Treino concluído</span>
+            <h2 class="display small">Bom trabalho.</h2>
             <div class="stats-row">
-                <div class="stat-card"><span class="stat-value" id="summary-duration">0m</span><span class="stat-label">Duração</span></div>
-                <div class="stat-card"><span class="stat-value" id="summary-exercises">0</span><span class="stat-label">Exercícios</span></div>
-                <div class="stat-card"><span class="stat-value" id="summary-sets">0</span><span class="stat-label">Séries</span></div>
+                <div class="stat-card"><span class="stat-value" id="summary-duration">0m</span><span class="stat-label">duração</span></div>
+                <div class="stat-card"><span class="stat-value" id="summary-exercises">0</span><span class="stat-label">exercícios</span></div>
+                <div class="stat-card"><span class="stat-value" id="summary-sets">0</span><span class="stat-label">séries</span></div>
             </div>
             <button id="btn-close-summary" class="btn btn-primary btn-block">Fechar</button>
         </div>
     </div>
 
-    <script src="app.js"></script>
+    <!-- CONFIRMAÇÃO (no lugar da caixa padrão do Android) -->
+    <div id="modal-confirm" class="modal-overlay centered top">
+        <div class="modal-card">
+            <h3 id="confirm-title"></h3>
+            <p id="confirm-text" class="detail-desc"></p>
+            <div class="btn-row">
+                <button id="confirm-cancel" class="btn btn-outline grow">Cancelar</button>
+                <button id="confirm-ok" class="btn btn-primary grow">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="toast" role="status"></div>
+
+    <script src="app.js?v=__V__"></script>
 </body>
 </html>

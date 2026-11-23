@@ -77,7 +77,11 @@ class ApiServer(
             else -> decodedUri
         }
 
-        val bytes = openAsset(assetPath)
+        var bytes = openAsset(assetPath)
+        // Carimba a versão nos endereços de CSS/JS: o WebView não reaproveita arquivo de versão anterior
+        if (bytes != null && assetPath == "index.html") {
+            bytes = bytes.decodeToString().replace("__V__", BuildConfig.VERSION_CODE.toString()).toByteArray()
+        }
         if (bytes != null) {
             val mime = when {
                 assetPath.endsWith(".html") -> "text/html; charset=utf-8"
@@ -85,6 +89,7 @@ class ApiServer(
                 assetPath.endsWith(".js") -> "application/javascript; charset=utf-8"
                 assetPath.endsWith(".json") -> "application/json; charset=utf-8"
                 assetPath.endsWith(".png") -> "image/png"
+                assetPath.endsWith(".webp") -> "image/webp"
                 assetPath.endsWith(".svg") -> "image/svg+xml"
                 assetPath.endsWith(".gif") -> "image/gif"
                 else -> "application/octet-stream"
@@ -95,7 +100,9 @@ class ApiServer(
                 ByteArrayInputStream(bytes),
                 bytes.size.toLong()
             ).also {
-                if (assetPath.endsWith(".html")) {
+                if (assetPath.startsWith("thumbs/")) {
+                    it.addHeader("Cache-Control", "public, max-age=604800") // miniaturas quase nunca mudam
+                } else if (assetPath.endsWith(".html")) {
                     it.addHeader("Cache-Control", "no-cache")
                 } else {
                     it.addHeader("Cache-Control", "no-cache") // senao o WebView segura CSS/JS velhos apos atualizar o APK
