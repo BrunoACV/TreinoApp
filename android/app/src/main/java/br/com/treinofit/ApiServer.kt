@@ -33,6 +33,10 @@ class ApiServer(
         // 2. Servir GIFs locais (/gifs/...)
         if (decodedUri.startsWith("/gifs/")) {
             val filename = decodedUri.removePrefix("/gifs/").trimStart('/')
+            // Só nome de arquivo: "/gifs/../../shared_prefs/…" entregava os dados do app a qualquer outro app do aparelho
+            if (filename.contains('/') || filename.contains('\\') || filename.contains("..")) {
+                return newFixedLengthResponse(Response.Status.NOT_FOUND, "text/plain", "GIF not found")
+            }
             val gifFile = if (File(gifsDir, filename).exists()) {
                 File(gifsDir, filename)
             } else {

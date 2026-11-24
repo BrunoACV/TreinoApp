@@ -210,10 +210,12 @@
             const sys = call('isSystemDark');
             this.systemDark = sys === null ? !matchMedia('(prefers-color-scheme: light)').matches : !!sys;
             this.scheme = Storage.get('treinofit_theme_scheme') || 'system';
-            this.palette = Storage.get('treinofit_theme_mode') || 'brand';
+            // chave nova de propósito: a antiga (treinofit_theme_mode) guardava "bw"/"dynamic" da versão de setembro
+            // e faria quem atualiza abrir sem a paleta da marca
+            this.palette = Storage.get('treinofit_theme_palette') || 'brand';
 
             this.bindSegmented('setting-theme-scheme', 'scheme', 'treinofit_theme_scheme');
-            this.bindSegmented('setting-theme-palette', 'palette', 'treinofit_theme_mode');
+            this.bindSegmented('setting-theme-palette', 'palette', 'treinofit_theme_palette');
             this.apply();
         },
 
@@ -263,18 +265,25 @@
     };
 
     // --- Dados salvos ---
+    // Alguma chave existia e não pôde ser lida: o app não semeia nem exporta sozinho por cima do que não leu
+    let loadFailed = false;
     function loadPersistedData() {
+        const list = (v) => { if (!Array.isArray(v)) throw new Error('não é lista'); return v; };
         const read = (key, apply) => {
+            let raw;
             try {
-                const raw = Storage.get(key);
+                raw = Storage.get(key);
                 if (raw) apply(JSON.parse(raw));
             } catch (e) {
+                loadFailed = true;
+                // o texto original fica guardado à parte antes que qualquer salvamento passe por cima dele
+                if (raw && !Storage.get(key + '_ilegivel')) Storage.set(key + '_ilegivel', raw);
                 console.error('Erro ao ler', key, e); // um dado ruim não derruba os outros
             }
         };
-        read('treinofit_favs', v => { state.favorites = new Set(v); });
-        read('treinofit_custom_workouts', v => { if (Array.isArray(v)) state.customWorkouts = v; });
-        read('treinofit_history', v => { if (Array.isArray(v)) state.history = v; });
+        read('treinofit_favs', v => { state.favorites = new Set(list(v)); });
+        read('treinofit_custom_workouts', v => { state.customWorkouts = list(v); });
+        read('treinofit_history', v => { state.history = list(v); });
         read('treinofit_settings', v => { state.settings = { ...state.settings, ...v }; });
     }
 
@@ -364,7 +373,7 @@
             state.presets = await preRes.json();
 
             let updated = false;
-            if (!Storage.get('treinofit_defaults_seeded')) {
+            if (!loadFailed && !Storage.get('treinofit_defaults_seeded')) {
                 try {
                     if (await addDefaultWorkouts()) updated = true;
                     Storage.set('treinofit_defaults_seeded', '1');
@@ -376,7 +385,7 @@
             state.customWorkouts.forEach(w => (w.exercises || []).forEach(item => {
                 if (!item.gif_file) { fillFromCatalog(item); updated = true; }
             }));
-            if (updated) saveCustomWorkouts();
+            if (updated && !loadFailed) saveCustomWorkouts();
 
             setupCategoryChips('category-chips', () => state.selectedCategory, (cat) => {
                 state.selectedCategory = cat;
@@ -389,7 +398,8 @@
             renderHomeStats();
             updateFavoritesBadge();
             restoreActiveWorkout();
-            scheduleBackup(); // já na primeira abertura fica uma cópia fora do app
+            if (loadFailed) toast('Parte dos seus dados não pôde ser lida. Nada foi alterado.');
+            else scheduleBackup(); // já na primeira abertura fica uma cópia fora do app
         } catch (err) {
             console.error('Erro ao carregar dados iniciais:', err);
             toast('Erro ao carregar o banco de exercícios');
@@ -1013,7 +1023,9 @@
             img.alt = current.name;
         }
 
-        $('player-reps-target').textContent = `${current.reps || '10'} reps`;
+        // "reps" só depois de número ou faixa: o campo é texto livre ("12 cada", "60s", "Falha (8-12)")
+        const reps = String(current.reps || '10');
+        $('player-reps-target').textContent = /^\d+\+?(\s*[-–]\s*\d+\+?)?$/.test(reps) ? `${reps} reps` : reps;
         $('player-sets-done').textContent = current.done;
         $('player-sets-total').textContent = current.series;
         $('btn-set-minus').disabled = current.done === 0;
@@ -1057,12 +1069,18 @@
         const idx = state.activeExerciseIndex + delta;
         if (idx < 0) return;
         if (idx >= state.activeWorkout.exercises.length) {
-            finishWorkoutSession();
+            // "Próximo" vira "Concluir" no mesmo lugar: com série por fazer, um toque a mais não encerra sem perguntar
+            if (state.activeWorkout.exercises.some(e => e.done < e.series)) confirmFinish();
+            else finishWorkoutSession();
             return;
         }
         state.activeExerciseIndex = idx;
         persistActive();
         renderActiveExercise();
+    }
+
+    async function confirmFinish() {
+        if (await ask('Finalizar o treino agora?', 'Ele entra no histórico com as séries feitas até aqui.', 'Finalizar')) finishWorkoutSession();
     }
 
     async function confirmCancelWorkout() {
@@ -1074,9 +1092,7 @@
         $('btn-set-minus').addEventListener('click', () => changeSets(-1));
         $('btn-player-prev').addEventListener('click', () => goToExercise(-1));
         $('btn-player-next').addEventListener('click', () => goToExercise(1));
-        $('btn-player-finish').addEventListener('click', async () => {
-            if (await ask('Finalizar o treino agora?', 'Ele entra no histórico com as séries feitas até aqui.', 'Finalizar')) finishWorkoutSession();
-        });
+        $('btn-player-finish').addEventListener('click', confirmFinish);
         $('btn-minimize-player').addEventListener('click', confirmCancelWorkout);
         $('btn-timer-add30').addEventListener('click', () => setRest(state.restEndsAt + 30000));
         $('btn-timer-sub10').addEventListener('click', () => setRest(state.restEndsAt - 10000));

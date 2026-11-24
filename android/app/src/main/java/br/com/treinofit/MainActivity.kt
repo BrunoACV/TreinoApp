@@ -313,7 +313,7 @@ class MainActivity : AppCompatActivity() {
 
         /**
          * Grava o backup em Downloads/TreinoFit, fora da área do app: sobrevive a desinstalar e reinstalar.
-         * Um arquivo por dia (o do dia é regravado) e os últimos 14 dias ficam guardados,
+         * Um arquivo por dia (o do dia é regravado) e as 14 cópias mais recentes ficam guardadas,
          * para um dia ruim não apagar a cópia boa da véspera.
          */
         @JavascriptInterface
@@ -335,12 +335,10 @@ class MainActivity : AppCompatActivity() {
                     val novo = contentResolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, valores)!!
                     escrever(novo)
                     val editor = prefs.edit().putString(chave, novo.toString())
-                    prefs.all.keys.filter { it.startsWith("uri_") && it != chave }.forEach { antiga ->
-                        val dia = runCatching { LocalDate.parse(antiga.removePrefix("uri_")) }.getOrNull()
-                        if (dia == null || dia.isBefore(hoje.minusDays(14))) {
-                            runCatching { contentResolver.delete(Uri.parse(prefs.getString(antiga, "")), null, null) }
-                            editor.remove(antiga)
-                        }
+                    // Rotação por quantidade (14 cópias), não por idade: semanas sem abrir o app não apagam as cópias boas
+                    prefs.all.keys.filter { it.startsWith("uri_") && it != chave }.sortedDescending().drop(13).forEach { antiga ->
+                        runCatching { contentResolver.delete(Uri.parse(prefs.getString(antiga, "")), null, null) }
+                        editor.remove(antiga)
                     }
                     editor.apply()
                 }
