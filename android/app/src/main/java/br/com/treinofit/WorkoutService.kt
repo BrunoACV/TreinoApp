@@ -32,6 +32,13 @@ class WorkoutService : Service() {
     private var vibrate = true
     private var sound = true
 
+    // Uma trava só, reaproveitada: cada toque em "+" criava outra, e pular o descanso ou sair do treino não soltava nenhuma
+    private val restLock by lazy {
+        (getSystemService(Context.POWER_SERVICE) as PowerManager)
+            .newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "treinofit:descanso")
+            .apply { setReferenceCounted(false) }
+    }
+
     private val restDone = Runnable {
         if (vibrate) runCatching {
             @Suppress("DEPRECATION")
@@ -58,12 +65,11 @@ class WorkoutService : Service() {
                 val delay = endsAt - System.currentTimeMillis()
                 if (delay > 0) {
                     // Segura a CPU até o aviso: com a tela apagada o Handler pararia de contar
-                    (getSystemService(Context.POWER_SERVICE) as PowerManager)
-                        .newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "treinofit:descanso")
-                        .acquire(delay + 2000)
+                    restLock.acquire(delay + 2000) // sem contagem de referência: pedir de novo só troca o prazo
                     handler.postDelayed(restDone, delay)
                     notify("Descansando")
                 } else {
+                    restLock.release() // descanso pulado ou cancelado
                     notify("Treino em andamento")
                 }
             }
@@ -78,6 +84,7 @@ class WorkoutService : Service() {
 
     override fun onDestroy() {
         handler.removeCallbacksAndMessages(null)
+        restLock.release()
         super.onDestroy()
     }
 
